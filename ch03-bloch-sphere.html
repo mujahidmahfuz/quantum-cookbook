@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 3 — Qubits & Gate Introduction · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">⚗</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../index.html#cookbook">Cookbook</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <span class="toc-chapter is-locked">1. Basic Linear Algebra</span>
+      <span class="toc-chapter is-locked">2. Inner & Outer Product</span>
+      <a class="toc-chapter is-live is-current" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <span class="toc-chapter is-locked">4. Unitary & Hermitian</span>
+      <span class="toc-chapter is-locked">5. Tensor / Kronecker Product</span>
+      <span class="toc-chapter is-locked">6. Commutation Relations</span>
+      <span class="toc-chapter is-locked">7. Postulates & Measurement</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <span class="toc-chapter is-locked">8–13. Density matrices → Kraus → damping</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <span class="toc-chapter is-locked">14–19. Teleportation → GHZ/W → Dicke</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <span class="toc-chapter is-locked">22–31. Parallelism → Shor</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part I · Chapter 3</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Qubits & Gate Introduction</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~25 min</span>
+        <span><b>Prerequisites</b> Ch. 1–2</span>
+        <span><b>Tools</b> Bloch sphere, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <p class="lede">A qubit is a unit vector in a two-dimensional complex space. That's the whole mathematical story — but the geometry of <em>where that vector points</em> is what makes qubits feel different from classical bits, and that geometry has a name: the Bloch sphere.</p>
+
+      <h2>From a bit to a qubit</h2>
+      <p>A classical bit is 0 or 1 — a single binary choice. A qubit's state is a superposition:</p>
+      <figure class="qc-figure" id="bloch-widget">
+        <div class="figure-label"><span>Fig. 3.1 — interactive</span><span>drag the sliders</span></div>
+        <div class="figure-body">
+          <div id="bloch-ket" style="margin-bottom: 14px; font-size: 16px;"></div>
+          <div class="bloch-layout">
+            <div class="bloch-canvas-wrap">
+              <canvas id="bloch-canvas"></canvas>
+            </div>
+            <div class="bloch-controls">
+              <div class="slider-row">
+                <label><span>θ (polar angle)</span><span id="theta-val">60°</span></label>
+                <input type="range" id="theta-slider" min="0" max="3.14159" step="0.01" value="1.0472" />
+              </div>
+              <div class="slider-row">
+                <label><span>φ (azimuthal angle)</span><span id="phi-val">45°</span></label>
+                <input type="range" id="phi-slider" min="0" max="6.28318" step="0.01" value="0.7854" />
+              </div>
+              <div class="state-readout" id="bloch-coords"></div>
+            </div>
+          </div>
+          <div class="bloch-2d-wrap">
+            <svg id="bloch-2d" width="180" height="180" viewBox="0 0 180 180"></svg>
+          </div>
+        </div>
+        <figcaption>The Bloch sphere (left) and the great-circle slice at the current φ (below) — the 2D cross-section that makes the θ angle easy to read at a glance. Every point on the surface is a valid single-qubit state.</figcaption>
+      </figure>
+
+      <p>Every point on the sphere's surface is a valid single-qubit state. The north pole is <span class="mono">|0⟩</span>, the south pole is <span class="mono">|1⟩</span>, and everywhere else is a superposition with a specific phase and amplitude balance — not "0 and 1 at once" in any vague sense, but one specific point on a specific sphere.</p>
+
+      <h3>Global phase doesn't move the point</h3>
+      <p>Multiply the whole state by <span class="mono">e^{iα}</span> for any real α, and the Bloch vector doesn't move at all — global phase is invisible to the sphere, and (as you'll confirm in Ch. 7) invisible to any measurement too. Only the <em>relative</em> phase between the |0⟩ and |1⟩ components — the φ slider above — actually changes where the point sits.</p>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: the Bloch sphere</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Video</span><a href="https://www.youtube.com/watch?v=ACiD8ji9P1M" target="_blank" rel="noopener">3Blue1Brown — visualizing qubits</a><span class="res-note">Best visual intuition for why the sphere has the shape it does.</span></li>
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §1.2</a><span class="res-note">The canonical derivation of the θ/φ parametrization.</span></li>
+          <li><span class="res-type">Tool</span><a href="https://algassert.com/quirk" target="_blank" rel="noopener">Quirk</a><span class="res-note">Drag gates onto a circuit and watch the Bloch sphere update live — good for building intuition beyond a single qubit.</span></li>
+        </ul>
+      </div>
+
+      <h2>Your first gate: the Hadamard</h2>
+      <p>The Hadamard gate <span class="mono">H</span> takes <span class="mono">|0⟩</span> straight to the equator — the state with equal weight on both outcomes. Run it below and check the amplitudes against what the sliders show for θ = 90°, φ = 0°.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 3.2 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+H = (1/np.sqrt(2)) * np.array([[1, 1],
+                                [1, -1]])
+zero = np.array([1, 0])
+
+state = H @ zero
+print("H|0> =", state)
+print("Probability of measuring 0:", abs(state[0])**2)
+print("Probability of measuring 1:", abs(state[1])**2)</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>Applying a Hadamard gate to |0⟩ — edit the matrix and re-run. First run downloads a small Python runtime into the tab; after that it's instant.</figcaption>
+      </figure>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch03-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">If you multiply a qubit's state by a global phase e^{iα}, where does its point move to on the Bloch sphere?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer">
+        <p>Nowhere — global phase is invisible on the Bloch sphere and invisible to measurement. Only relative phase between the |0⟩ and |1⟩ amplitudes changes the point's position.</p>
+      </div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch03-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What θ and φ put a qubit exactly on the equator of the Bloch sphere?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer">
+        <p>θ = 90° (π/2), with φ free to range from 0° to 360° — the equator is the whole set of equal-superposition states, distinguished from each other only by relative phase.</p>
+      </div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch03-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What state does the Hadamard gate produce from |0⟩, and where does it sit on the sphere?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer">
+        <p>(|0⟩ + |1⟩)/√2 — on the equator, at φ = 0°. Equal probability of measuring 0 or 1, with no relative phase between the two terms.</p>
+      </div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--color-text-muted); font-size: 14px;">This proof-of-concept wires up the SM-2 scheduler and storage. A full "serve me the next due card from anywhere in the book" queue view is the next build step — for now, scroll back to a chapter's quiz cards to review them once they're due.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/bloch-sphere.js"></script>
+</body>
+</html>
