@@ -103,22 +103,57 @@
   }
 
   // ---------- Placement helpers ----------
-  function neighborWire(w) { return w < NQ - 1 ? w + 1 : w - 1; }
+  let pendingMulti = null; // { type, firstWire: number|null, col: number|null }
+
   function cellFree(w, col) {
     return grid[w][col] === null && !(twoQ[col] && (twoQ[col].a === w || twoQ[col].b === w));
   }
 
-  function placeTile(tile, wire, col) {
-    if (tile === "CNOT" || tile === "CZ" || tile === "SWAP") {
-      const other = neighborWire(wire);
-      if (!cellFree(wire, col) || !cellFree(other, col)) return false;
-      if (tile === "CNOT") twoQ[col] = { type: "CNOT", a: wire, b: other, control: wire, target: other };
-      else twoQ[col] = { type: tile, a: Math.min(wire, other), b: Math.max(wire, other) };
-      return true;
-    }
+  function placeSingleTile(tile, wire, col) {
     if (!cellFree(wire, col)) return false;
     grid[wire][col] = tile;
     return true;
+  }
+
+  // Explicit two-click placement for CNOT/CZ/SWAP — first call picks qubit one,
+  // a second call on a different wire in the SAME column completes the gate.
+  // Used identically by drag-and-drop and by click-to-place, so both paths behave the same way.
+  function multiStep(type, wire, col) {
+    if (!cellFree(wire, col)) return;
+
+    if (!pendingMulti || pendingMulti.type !== type || pendingMulti.firstWire === null) {
+      pendingMulti = { type, firstWire: wire, col };
+      renderWires();
+      renderHint();
+      return;
+    }
+    if (col !== pendingMulti.col) {
+      pendingMulti = { type, firstWire: wire, col };
+      renderWires();
+      renderHint();
+      return;
+    }
+    if (wire === pendingMulti.firstWire) {
+      pendingMulti = null;
+      renderWires();
+      renderHint();
+      return;
+    }
+    if (type === "CNOT") twoQ[col] = { type, a: pendingMulti.firstWire, b: wire, control: pendingMulti.firstWire, target: wire };
+    else twoQ[col] = { type, a: Math.min(pendingMulti.firstWire, wire), b: Math.max(pendingMulti.firstWire, wire) };
+    pendingMulti = null;
+    renderAll();
+  }
+
+  function renderHint() {
+    const el = document.getElementById("qc-hint");
+    if (!el) return;
+    if (!pendingMulti) { el.textContent = ""; return; }
+    if (pendingMulti.firstWire === null) {
+      el.textContent = `Placing ${pendingMulti.type} — click any empty wire/column for the first qubit.`;
+    } else {
+      el.textContent = `Placing ${pendingMulti.type}, first qubit q${pendingMulti.firstWire} (column ${pendingMulti.col + 1}) — click a DIFFERENT wire in that same column to finish, or click q${pendingMulti.firstWire} again to cancel.`;
+    }
   }
 
   // ---------- Rendering ----------
@@ -156,8 +191,13 @@
         } else if (grid[w][col]) {
           cell.classList.add("is-filled");
           cell.textContent = grid[w][col];
+        } else {
+          if (selectedEmpty && selectedEmpty.wire === w && selectedEmpty.col === col) cell.classList.add("is-selected");
+          if (pendingMulti && pendingMulti.col === col) {
+            cell.classList.add("is-pending-col");
+            if (pendingMulti.firstWire === w) { cell.classList.add("is-pending-first"); cell.textContent = "●"; }
+          }
         }
-        if (selectedEmpty && selectedEmpty.wire === w && selectedEmpty.col === col) cell.classList.add("is-selected");
 
         cell.addEventListener("dragover", (e) => { e.preventDefault(); cell.classList.add("is-over"); });
         cell.addEventListener("dragleave", () => cell.classList.remove("is-over"));
@@ -165,7 +205,9 @@
           e.preventDefault();
           cell.classList.remove("is-over");
           const tile = e.dataTransfer.getData("gate");
-          if (tile && placeTile(tile, w, col)) { selectedEmpty = null; renderAll(); }
+          if (!tile) return;
+          if (tile === "CNOT" || tile === "CZ" || tile === "SWAP") { multiStep(tile, w, col); return; }
+          if (placeSingleTile(tile, w, col)) { selectedEmpty = null; renderAll(); }
         });
         cell.addEventListener("click", () => onCellClick(w, col));
         row.appendChild(cell);
@@ -206,6 +248,10 @@
       renderInspector();
       return;
     }
+    if (pendingMulti) {
+      multiStep(pendingMulti.type, wire, col);
+      return;
+    }
     selectedEmpty = (selectedEmpty && selectedEmpty.wire === wire && selectedEmpty.col === col) ? null : { wire, col };
     selectedGate = null;
     renderWires();
@@ -244,8 +290,18 @@
     document.querySelectorAll(".pal-tile").forEach((tile) => {
       tile.addEventListener("dragstart", (e) => e.dataTransfer.setData("gate", tile.dataset.gate));
       tile.addEventListener("click", () => {
+        const g = tile.dataset.gate;
+        if (g === "CNOT" || g === "CZ" || g === "SWAP") {
+          pendingMulti = { type: g, firstWire: null, col: null };
+          selectedEmpty = null;
+          selectedGate = null;
+          renderWires();
+          renderHint();
+          renderInspector();
+          return;
+        }
         if (!selectedEmpty) return;
-        if (placeTile(tile.dataset.gate, selectedEmpty.wire, selectedEmpty.col)) {
+        if (placeSingleTile(g, selectedEmpty.wire, selectedEmpty.col)) {
           selectedEmpty = null;
           renderAll();
         }
@@ -256,6 +312,7 @@
       twoQ = {};
       selectedEmpty = null;
       selectedGate = null;
+      pendingMulti = null;
       renderAll();
     });
     document.getElementById("qc-run").addEventListener("click", renderAll);
@@ -393,6 +450,7 @@
   // ---------- Orchestration ----------
   function renderAll() {
     renderWires();
+    renderHint();
     renderInspector();
     renderQASM();
     const amps = simulate();

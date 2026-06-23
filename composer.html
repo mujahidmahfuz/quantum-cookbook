@@ -1,109 +1,181 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Quantum Composer — Quantum Cookbook</title>
-<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-<link rel="stylesheet" href="css/composer.css" />
-</head>
-<body>
+(function () {
+  const SCALE = 36;
+  const SIZE = 280;
+  const ORIGIN = SIZE / 2;
+  const RANGE = 3;
 
-<div class="composer-topbar">
-  <div class="composer-title">
-    <a class="back-link" href="chapters/ch03-bloch-sphere.html">← back to Ch. 3</a>
-    <h1>Quantum Composer</h1>
-  </div>
-  <div class="scope-note">Clifford+T, CNOT/CZ/SWAP, measurement — 4 qubits. Rotation &amp; multi-control gates coming later.</div>
-</div>
+  function toPx(x, y) { return { px: ORIGIN + x * SCALE, py: ORIGIN - y * SCALE }; }
+  function fromPx(px, py) { return { x: (px - ORIGIN) / SCALE, y: -(py - ORIGIN) / SCALE }; }
+  function clamp(v) { return Math.max(-RANGE, Math.min(RANGE, v)); }
+  function round1(v) { return Math.round(v * 10) / 10; }
 
-<div class="composer-grid">
-  <!-- Palette -->
-  <div class="palette-panel">
-    <div class="palette-section-title">Hadamard</div>
-    <div class="palette-grid">
-      <div class="pal-tile g-h" draggable="true" data-gate="H">H</div>
-    </div>
+  function gridSvg() {
+    let s = "";
+    for (let i = -RANGE; i <= RANGE; i++) {
+      const { px } = toPx(i, 0);
+      const { py } = toPx(0, i);
+      s += `<line x1="${px}" y1="0" x2="${px}" y2="${SIZE}" stroke="#ddd7c8" stroke-width="${i === 0 ? 1.2 : 0.6}" />`;
+      s += `<line x1="0" y1="${py}" x2="${SIZE}" y2="${py}" stroke="#ddd7c8" stroke-width="${i === 0 ? 1.2 : 0.6}" />`;
+    }
+    return s;
+  }
 
-    <div class="palette-section-title">Pauli</div>
-    <div class="palette-grid">
-      <div class="pal-tile g-pauli" draggable="true" data-gate="I">I</div>
-      <div class="pal-tile g-pauli" draggable="true" data-gate="X">X</div>
-      <div class="pal-tile g-pauli" draggable="true" data-gate="Y">Y</div>
-      <div class="pal-tile g-pauli" draggable="true" data-gate="Z">Z</div>
-    </div>
+  function arrowSvg(x, y, color) {
+    const { px, py } = toPx(x, y);
+    if (Math.hypot(x, y) < 0.02) return "";
+    const angle = Math.atan2(py - ORIGIN, px - ORIGIN);
+    const headLen = 9;
+    const h1x = px - headLen * Math.cos(angle - Math.PI / 7);
+    const h1y = py - headLen * Math.sin(angle - Math.PI / 7);
+    const h2x = px - headLen * Math.cos(angle + Math.PI / 7);
+    const h2y = py - headLen * Math.sin(angle + Math.PI / 7);
+    return `
+      <line x1="${ORIGIN}" y1="${ORIGIN}" x2="${px}" y2="${py}" stroke="${color}" stroke-width="2.4" />
+      <polygon points="${px},${py} ${h1x},${h1y} ${h2x},${h2y}" fill="${color}" />
+    `;
+  }
 
-    <div class="palette-section-title">Phase family</div>
-    <div class="palette-grid">
-      <div class="pal-tile g-phase" draggable="true" data-gate="S">S</div>
-      <div class="pal-tile g-phase" draggable="true" data-gate="Sdg">S†</div>
-      <div class="pal-tile g-phase" draggable="true" data-gate="T">T</div>
-      <div class="pal-tile g-phase" draggable="true" data-gate="Tdg">T†</div>
-    </div>
+  function handleSvg(x, y, color, id) {
+    const { px, py } = toPx(x, y);
+    return `<circle cx="${px}" cy="${py}" r="9" fill="${color}" stroke="#fff" stroke-width="2" data-handle="${id}" style="cursor:grab;" />`;
+  }
 
-    <div class="palette-section-title">Multi-qubit</div>
-    <div class="palette-grid">
-      <div class="pal-tile g-multi" draggable="true" data-gate="CNOT">CNOT</div>
-      <div class="pal-tile g-multi" draggable="true" data-gate="CZ">CZ</div>
-      <div class="pal-tile g-multi" draggable="true" data-gate="SWAP">SWAP</div>
-    </div>
+  // ---------- Fig 1.1: vector addition ----------
+  let a = { x: 1.5, y: 1 };
+  let b = { x: 1, y: -1.2 };
 
-    <div class="palette-section-title">Readout</div>
-    <div class="palette-grid">
-      <div class="pal-tile g-measure" draggable="true" data-gate="Measure">M</div>
-    </div>
-  </div>
+  function staticPartAdd() {
+    return gridSvg() + arrowSvg(b.x, b.y, "#a39d8e") + arrowSvg(a.x, a.y, "#2748c9");
+  }
 
-  <!-- Circuit -->
-  <div class="circuit-panel">
-    <div class="circuit-toolbar">
-      <button class="btn-dark is-run" id="qc-run">Recompute ▸</button>
-      <button class="btn-dark" id="qc-clear">Clear circuit</button>
-    </div>
-    <div class="wires-wrap">
-      <div id="qc-wires"></div>
-      <div class="creg-row">
-        <div class="creg-label">c4</div>
-      </div>
-      <div class="two-q-connectors" id="qc-connectors"></div>
-    </div>
-  </div>
+  function renderAddDynamic() {
+    const svg = document.getElementById("vec-add-svg");
+    if (!svg) return;
+    const sum = { x: a.x + b.x, y: a.y + b.y };
+    const guide = `<line x1="${toPx(a.x, a.y).px}" y1="${toPx(a.x, a.y).py}" x2="${toPx(sum.x, sum.y).px}" y2="${toPx(sum.x, sum.y).py}" stroke="#a39d8e" stroke-width="1.6" stroke-dasharray="4 3" />`;
+    svg.innerHTML = staticPartAdd() + guide + arrowSvg(sum.x, sum.y, "#a8702b") +
+      handleSvg(a.x, a.y, "#2748c9", "a") + handleSvg(b.x, b.y, "#6e6a60", "b");
+    attachHandleListeners(svg, "vec-add");
+    const readout = document.getElementById("vec-add-readout");
+    if (readout) readout.textContent = `a = (${round1(a.x)}, ${round1(a.y)})    b = (${round1(b.x)}, ${round1(b.y)})    a + b = (${round1(sum.x)}, ${round1(sum.y)})`;
+  }
 
-  <!-- Right sidebar -->
-  <div class="side-panel">
-    <div class="side-section">
-      <h2>OpenQASM 2.0</h2>
-      <div class="qasm-code" id="qc-qasm"></div>
-    </div>
-    <div class="side-section" style="flex:1;">
-      <h2>Gate inspector <span style="font-size:10px;">(click a placed gate)</span></h2>
-      <div id="qc-inspector"><p class="inspector-empty">Click any gate on the circuit to see its matrix and a short explanation here — this is the panel IBM's composer doesn't have.</p></div>
-    </div>
-  </div>
-</div>
+  // ---------- Fig 1.2: matrix transformation ----------
+  let v = { x: 1.4, y: 0.8 };
+  let M = [[1, 0], [0, 1]];
 
-<div class="bottom-grid">
-  <div class="bottom-panel">
-    <h2>Probabilities</h2>
-    <div class="prob-chart" id="qc-probchart"></div>
-  </div>
-  <div class="bottom-panel">
-    <h2>Q-sphere</h2>
-    <div class="qsphere-wrap">
-      <canvas id="qsphere-canvas"></canvas>
-      <div id="qsphere-labels"></div>
-      <div class="phase-wheel-wrap">
-        <div class="phase-wheel"></div>
-        <div class="phase-wheel-labels">phase: 0 → 2π<br/>size: probability</div>
-      </div>
-    </div>
-  </div>
-</div>
+  function applyM(vec) {
+    return { x: M[0][0] * vec.x + M[0][1] * vec.y, y: M[1][0] * vec.x + M[1][1] * vec.y };
+  }
 
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
-<script src="js/composer.js"></script>
-</body>
-</html>
+  function renderTransformDynamic() {
+    const svg = document.getElementById("vec-transform-svg");
+    if (!svg) return;
+    const mv = applyM(v);
+    svg.innerHTML = gridSvg() + arrowSvg(mv.x, mv.y, "#a8702b") + arrowSvg(v.x, v.y, "#2748c9") +
+      handleSvg(v.x, v.y, "#2748c9", "v");
+    attachHandleListeners(svg, "vec-transform");
+    const readout = document.getElementById("vec-transform-readout");
+    if (readout) readout.textContent = `v = (${round1(v.x)}, ${round1(v.y)})    Mv = (${round1(mv.x)}, ${round1(mv.y)})`;
+    const eq = document.getElementById("vec-transform-eq");
+    if (eq && window.katex) {
+      katex.render(
+        `\\begin{bmatrix}${M[0][0]}&${M[0][1]}\\\\${M[1][0]}&${M[1][1]}\\end{bmatrix}\\begin{bmatrix}${round1(v.x)}\\\\${round1(v.y)}\\end{bmatrix}=\\begin{bmatrix}${round1(mv.x)}\\\\${round1(mv.y)}\\end{bmatrix}`,
+        eq
+      );
+    }
+  }
+
+  function syncMatrixInputs() {
+    ["m00", "m01", "m10", "m11"].forEach((id, idx) => {
+      const el = document.getElementById(id);
+      if (el) el.value = [M[0][0], M[0][1], M[1][0], M[1][1]][idx];
+    });
+  }
+
+  // ---------- Drag state (module-level, listeners attached ONCE per svg, not per render) ----------
+  let dragTarget = null; // "a" | "b" | "v" | null
+  let activeSvg = null;
+  let activeWhich = null;
+  let pendingFrame = false;
+
+  function attachHandleListeners(svg, which) {
+    // Only the handle circles are recreated each render, so (re)bind pointerdown on them.
+    svg.querySelectorAll("[data-handle]").forEach((h) => {
+      h.onpointerdown = (e) => {
+        dragTarget = h.dataset.handle;
+        activeSvg = svg;
+        activeWhich = which;
+        try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+        h.style.cursor = "grabbing";
+        e.preventDefault();
+      };
+    });
+  }
+
+  function handleMove(svg, which, clientX, clientY) {
+    const rect = svg.getBoundingClientRect();
+    const px = ((clientX - rect.left) / rect.width) * SIZE;
+    const py = ((clientY - rect.top) / rect.height) * SIZE;
+    const { x, y } = fromPx(px, py);
+    const cx = clamp(round1(x)), cy = clamp(round1(y));
+
+    if (which === "vec-add") {
+      if (dragTarget === "a") a = { x: cx, y: cy };
+      else if (dragTarget === "b") b = { x: cx, y: cy };
+    } else if (which === "vec-transform") {
+      v = { x: cx, y: cy };
+    }
+
+    if (pendingFrame) return;
+    pendingFrame = true;
+    requestAnimationFrame(() => {
+      pendingFrame = false;
+      if (which === "vec-add") renderAddDynamic();
+      else if (which === "vec-transform") renderTransformDynamic();
+    });
+  }
+
+  function wireGlobalPointerEvents() {
+    // Attached exactly once — never re-attached on render — which is the actual fix for the lag.
+    window.addEventListener("pointermove", (e) => {
+      if (!dragTarget || !activeSvg) return;
+      handleMove(activeSvg, activeWhich, e.clientX, e.clientY);
+    });
+    window.addEventListener("pointerup", () => { dragTarget = null; activeSvg = null; });
+    window.addEventListener("pointercancel", () => { dragTarget = null; activeSvg = null; });
+  }
+
+  function wireMatrixInputs() {
+    const ids = ["m00", "m01", "m10", "m11"];
+    ids.forEach((id, idx) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("input", () => {
+        const val = parseFloat(el.value);
+        const r = Math.floor(idx / 2), c = idx % 2;
+        M[r][c] = isNaN(val) ? 0 : val;
+        renderTransformDynamic();
+      });
+    });
+    document.querySelectorAll(".matrix-preset").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        M = JSON.parse(btn.dataset.matrix);
+        syncMatrixInputs();
+        renderTransformDynamic();
+      });
+    });
+  }
+
+  function init() {
+    wireGlobalPointerEvents();
+    if (document.getElementById("vec-add-svg")) renderAddDynamic();
+    if (document.getElementById("vec-transform-svg")) {
+      syncMatrixInputs();
+      wireMatrixInputs();
+      renderTransformDynamic();
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();

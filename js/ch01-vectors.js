@@ -1,8 +1,8 @@
 (function () {
-  const SCALE = 36;     // px per unit
-  const SIZE = 280;      // svg viewport size
+  const SCALE = 36;
+  const SIZE = 280;
   const ORIGIN = SIZE / 2;
-  const RANGE = 3;       // grid from -3..3
+  const RANGE = 3;
 
   function toPx(x, y) { return { px: ORIGIN + x * SCALE, py: ORIGIN - y * SCALE }; }
   function fromPx(px, py) { return { x: (px - ORIGIN) / SCALE, y: -(py - ORIGIN) / SCALE }; }
@@ -20,9 +20,8 @@
     return s;
   }
 
-  function arrowSvg(x, y, color, dashed) {
+  function arrowSvg(x, y, color) {
     const { px, py } = toPx(x, y);
-    const dash = dashed ? `stroke-dasharray="4 3"` : "";
     if (Math.hypot(x, y) < 0.02) return "";
     const angle = Math.atan2(py - ORIGIN, px - ORIGIN);
     const headLen = 9;
@@ -31,7 +30,7 @@
     const h2x = px - headLen * Math.cos(angle + Math.PI / 7);
     const h2y = py - headLen * Math.sin(angle + Math.PI / 7);
     return `
-      <line x1="${ORIGIN}" y1="${ORIGIN}" x2="${px}" y2="${py}" stroke="${color}" stroke-width="2.4" ${dash} />
+      <line x1="${ORIGIN}" y1="${ORIGIN}" x2="${px}" y2="${py}" stroke="${color}" stroke-width="2.4" />
       <polygon points="${px},${py} ${h1x},${h1y} ${h2x},${h2y}" fill="${color}" />
     `;
   }
@@ -44,26 +43,21 @@
   // ---------- Fig 1.1: vector addition ----------
   let a = { x: 1.5, y: 1 };
   let b = { x: 1, y: -1.2 };
-  let dragging1 = null;
 
-  function renderAdd() {
+  function staticPartAdd() {
+    return gridSvg() + arrowSvg(b.x, b.y, "#a39d8e") + arrowSvg(a.x, a.y, "#2748c9");
+  }
+
+  function renderAddDynamic() {
     const svg = document.getElementById("vec-add-svg");
     if (!svg) return;
     const sum = { x: a.x + b.x, y: a.y + b.y };
-    svg.innerHTML = `
-      ${gridSvg()}
-      ${arrowSvg(b.x, b.y, "#a39d8e", false)}
-      ${arrowSvg(a.x, a.y, "#2748c9", false)}
-      <line x1="${toPx(a.x, a.y).px}" y1="${toPx(a.x, a.y).py}" x2="${toPx(sum.x, sum.y).px}" y2="${toPx(sum.x, sum.y).py}" stroke="#a39d8e" stroke-width="1.6" stroke-dasharray="4 3" />
-      ${arrowSvg(sum.x, sum.y, "#a8702b", false)}
-      ${handleSvg(a.x, a.y, "#2748c9", "a")}
-      ${handleSvg(b.x, b.y, "#6e6a60", "b")}
-    `;
-    wireDrag(svg, "vec-add");
+    const guide = `<line x1="${toPx(a.x, a.y).px}" y1="${toPx(a.x, a.y).py}" x2="${toPx(sum.x, sum.y).px}" y2="${toPx(sum.x, sum.y).py}" stroke="#a39d8e" stroke-width="1.6" stroke-dasharray="4 3" />`;
+    svg.innerHTML = staticPartAdd() + guide + arrowSvg(sum.x, sum.y, "#a8702b") +
+      handleSvg(a.x, a.y, "#2748c9", "a") + handleSvg(b.x, b.y, "#6e6a60", "b");
+    attachHandleListeners(svg, "vec-add");
     const readout = document.getElementById("vec-add-readout");
-    if (readout) {
-      readout.textContent = `a = (${round1(a.x)}, ${round1(a.y)})    b = (${round1(b.x)}, ${round1(b.y)})    a + b = (${round1(sum.x)}, ${round1(sum.y)})`;
-    }
+    if (readout) readout.textContent = `a = (${round1(a.x)}, ${round1(a.y)})    b = (${round1(b.x)}, ${round1(b.y)})    a + b = (${round1(sum.x)}, ${round1(sum.y)})`;
   }
 
   // ---------- Fig 1.2: matrix transformation ----------
@@ -74,21 +68,15 @@
     return { x: M[0][0] * vec.x + M[0][1] * vec.y, y: M[1][0] * vec.x + M[1][1] * vec.y };
   }
 
-  function renderTransform() {
+  function renderTransformDynamic() {
     const svg = document.getElementById("vec-transform-svg");
     if (!svg) return;
     const mv = applyM(v);
-    svg.innerHTML = `
-      ${gridSvg()}
-      ${arrowSvg(mv.x, mv.y, "#a8702b", false)}
-      ${arrowSvg(v.x, v.y, "#2748c9", false)}
-      ${handleSvg(v.x, v.y, "#2748c9", "v")}
-    `;
-    wireDrag(svg, "vec-transform");
+    svg.innerHTML = gridSvg() + arrowSvg(mv.x, mv.y, "#a8702b") + arrowSvg(v.x, v.y, "#2748c9") +
+      handleSvg(v.x, v.y, "#2748c9", "v");
+    attachHandleListeners(svg, "vec-transform");
     const readout = document.getElementById("vec-transform-readout");
-    if (readout) {
-      readout.textContent = `v = (${round1(v.x)}, ${round1(v.y)})    Mv = (${round1(mv.x)}, ${round1(mv.y)})`;
-    }
+    if (readout) readout.textContent = `v = (${round1(v.x)}, ${round1(v.y)})    Mv = (${round1(mv.x)}, ${round1(mv.y)})`;
     const eq = document.getElementById("vec-transform-eq");
     if (eq && window.katex) {
       katex.render(
@@ -105,34 +93,57 @@
     });
   }
 
-  // ---------- Shared drag wiring ----------
-  function wireDrag(svg, which) {
+  // ---------- Drag state (module-level, listeners attached ONCE per svg, not per render) ----------
+  let dragTarget = null; // "a" | "b" | "v" | null
+  let activeSvg = null;
+  let activeWhich = null;
+  let pendingFrame = false;
+
+  function attachHandleListeners(svg, which) {
+    // Only the handle circles are recreated each render, so (re)bind pointerdown on them.
     svg.querySelectorAll("[data-handle]").forEach((h) => {
-      h.addEventListener("pointerdown", (e) => {
-        if (which === "vec-add") dragging1 = h.dataset.handle;
-        else dragging1 = "v";
-        svg.setPointerCapture(e.pointerId);
+      h.onpointerdown = (e) => {
+        dragTarget = h.dataset.handle;
+        activeSvg = svg;
+        activeWhich = which;
+        try { svg.setPointerCapture(e.pointerId); } catch (err) {}
         h.style.cursor = "grabbing";
-      });
+        e.preventDefault();
+      };
     });
-    svg.addEventListener("pointermove", (e) => {
-      if (!dragging1) return;
-      const rect = svg.getBoundingClientRect();
-      const px = ((e.clientX - rect.left) / rect.width) * SIZE;
-      const py = ((e.clientY - rect.top) / rect.height) * SIZE;
-      const { x, y } = fromPx(px, py);
-      const cx = clamp(round1(x)), cy = clamp(round1(y));
-      if (which === "vec-add") {
-        if (dragging1 === "a") a = { x: cx, y: cy };
-        else if (dragging1 === "b") b = { x: cx, y: cy };
-        renderAdd();
-      } else {
-        v = { x: cx, y: cy };
-        renderTransform();
-      }
+  }
+
+  function handleMove(svg, which, clientX, clientY) {
+    const rect = svg.getBoundingClientRect();
+    const px = ((clientX - rect.left) / rect.width) * SIZE;
+    const py = ((clientY - rect.top) / rect.height) * SIZE;
+    const { x, y } = fromPx(px, py);
+    const cx = clamp(round1(x)), cy = clamp(round1(y));
+
+    if (which === "vec-add") {
+      if (dragTarget === "a") a = { x: cx, y: cy };
+      else if (dragTarget === "b") b = { x: cx, y: cy };
+    } else if (which === "vec-transform") {
+      v = { x: cx, y: cy };
+    }
+
+    if (pendingFrame) return;
+    pendingFrame = true;
+    requestAnimationFrame(() => {
+      pendingFrame = false;
+      if (which === "vec-add") renderAddDynamic();
+      else if (which === "vec-transform") renderTransformDynamic();
     });
-    svg.addEventListener("pointerup", () => { dragging1 = null; });
-    svg.addEventListener("pointerleave", () => { dragging1 = null; });
+  }
+
+  function wireGlobalPointerEvents() {
+    // Attached exactly once — never re-attached on render — which is the actual fix for the lag.
+    window.addEventListener("pointermove", (e) => {
+      if (!dragTarget || !activeSvg) return;
+      handleMove(activeSvg, activeWhich, e.clientX, e.clientY);
+    });
+    window.addEventListener("pointerup", () => { dragTarget = null; activeSvg = null; });
+    window.addEventListener("pointercancel", () => { dragTarget = null; activeSvg = null; });
   }
 
   function wireMatrixInputs() {
@@ -144,24 +155,25 @@
         const val = parseFloat(el.value);
         const r = Math.floor(idx / 2), c = idx % 2;
         M[r][c] = isNaN(val) ? 0 : val;
-        renderTransform();
+        renderTransformDynamic();
       });
     });
     document.querySelectorAll(".matrix-preset").forEach((btn) => {
       btn.addEventListener("click", () => {
         M = JSON.parse(btn.dataset.matrix);
         syncMatrixInputs();
-        renderTransform();
+        renderTransformDynamic();
       });
     });
   }
 
   function init() {
-    if (document.getElementById("vec-add-svg")) renderAdd();
+    wireGlobalPointerEvents();
+    if (document.getElementById("vec-add-svg")) renderAddDynamic();
     if (document.getElementById("vec-transform-svg")) {
       syncMatrixInputs();
       wireMatrixInputs();
-      renderTransform();
+      renderTransformDynamic();
     }
   }
 

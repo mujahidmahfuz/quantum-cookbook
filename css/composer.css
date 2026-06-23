@@ -167,3 +167,12 @@ a { color: var(--c-blue); }
   background: conic-gradient(from 90deg, #ff5a7a, #ffd166, #25d39a, #33b1ff, #8a3ffc, #ff5a7a);
 }
 .phase-wheel-labels { font-family: var(--font-mono); font-size: 10px; color: var(--c-text-faint); }
+
+/* ---------- Explicit two-click multi-qubit placement (fix for forced-neighbor bug) ---------- */
+.palette-hint { font-family: var(--font-mono); font-size: 10.5px; color: var(--c-text-faint); margin: 6px 0 0; line-height: 1.5; }
+.qc-hint {
+  font-family: var(--font-mono); font-size: 12px; color: var(--c-blue);
+  min-height: 18px; margin-bottom: 14px;
+}
+.wire-cell.is-pending-col { background: var(--c-blue-dim); }
+.wire-cell.is-pending-first { color: var(--c-blue); border-color: var(--c-blue); font-size: 16px; }
