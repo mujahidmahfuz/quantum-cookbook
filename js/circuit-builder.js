@@ -99,7 +99,7 @@
     let theta = 0, phi = 0;
     const lines = [];
     const c0_0 = Math.cos(theta / 2), c1re_0 = Math.sin(theta / 2) * Math.cos(phi), c1im_0 = Math.sin(theta / 2) * Math.sin(phi);
-    lines.push(`Start  |0⟩                c0=${fmt(c0_0)}  c1=${fmt(c1re_0)}+${fmt(c1im_0)}i  (θ=0°, φ=0°)`);
+    lines.push(`Start  |0⟩                α=${fmt(c0_0)}  β=${fmt(c1re_0)}+${fmt(c1im_0)}i  (θ=0°, φ=0°)`);
 
     gates.forEach((g, i) => {
       const next = window.QC.computeNewAngles(g, theta, phi);
@@ -109,7 +109,7 @@
       const c1im = Math.sin(theta / 2) * Math.sin(phi);
       lines.push(
         `Step ${i + 1}  apply ${g}`.padEnd(24) +
-        `c0=${fmt(c0)}  c1=${fmt(c1re)}${c1im >= 0 ? "+" : ""}${fmt(c1im)}i  (θ=${(theta * 180 / Math.PI).toFixed(0)}°, φ=${(((phi % (2*Math.PI))+2*Math.PI)%(2*Math.PI)*180/Math.PI).toFixed(0)}°)`
+        `α=${fmt(c0)}  β=${fmt(c1re)}${c1im >= 0 ? "+" : ""}${fmt(c1im)}i  (θ=${(theta * 180 / Math.PI).toFixed(0)}°, φ=${(((phi % (2*Math.PI))+2*Math.PI)%(2*Math.PI)*180/Math.PI).toFixed(0)}°)`
       );
     });
 

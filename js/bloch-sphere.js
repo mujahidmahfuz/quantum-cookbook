@@ -122,7 +122,7 @@
       );
     }
     if (coordEl) {
-      coordEl.textContent = `c0 = ${fmt(c0)}   c1 = ${fmt(c1Re)} ${c1Im >= 0 ? "+" : "-"} ${fmt(Math.abs(c1Im))}i   |c0|²+|c1|² = ${fmt(c0 * c0 + c1Re * c1Re + c1Im * c1Im)}`;
+      coordEl.textContent = `α = ${fmt(c0)}   β = ${fmt(c1Re)} ${c1Im >= 0 ? "+" : "-"} ${fmt(Math.abs(c1Im))}i   |α|²+|β|² = ${fmt(c0 * c0 + c1Re * c1Re + c1Im * c1Im)}`;
     }
   }
 

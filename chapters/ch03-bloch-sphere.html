@@ -111,10 +111,10 @@
 
       <h3>What superposition actually means</h3>
       <p>Written out fully, a qubit's state is</p>
-      <p style="text-align:center; font-size: 18px;">|ψ⟩ = c₀|0⟩ + c₁|1⟩</p>
-      <p>where c₀ and c₁ are <em>complex numbers</em> called probability amplitudes — not probabilities themselves. The actual probability of measuring 0 is |c₀|², and of measuring 1 is |c₁|². Because some outcome must happen, these have to sum to exactly 1:</p>
-      <p style="text-align:center; font-size: 18px;">|c₀|² + |c₁|² = 1</p>
-      <p>That single constraint is why a qubit's state space is a <em>sphere</em> at all — it's the same reason the set of points (x, y, z) with x² + y² + z² = 1 traces out a sphere. The θ/φ parametrization in Fig. 3.1 is just a convenient way to walk along that constraint surface without ever leaving it: change θ or φ all you like, and |c₀|² + |c₁|² = 1 stays true automatically. The readout under the sphere confirms this directly — try dragging to an extreme angle and check that the line still sums to 1.</p>
+      <p style="text-align:center; font-size: 18px;">|ψ⟩ = α|0⟩ + β|1⟩</p>
+      <p>where α and β are <em>complex numbers</em> called probability amplitudes — not probabilities themselves. The actual probability of measuring 0 is |α|², and of measuring 1 is |β|². Because some outcome must happen, these have to sum to exactly 1:</p>
+      <p style="text-align:center; font-size: 18px;">|α|² + |β|² = 1</p>
+      <p>That single constraint is why a qubit's state space is a <em>sphere</em> at all — it's the same reason the set of points (x, y, z) with x² + y² + z² = 1 traces out a sphere. The θ/φ parametrization in Fig. 3.1 is just a convenient way to walk along that constraint surface without ever leaving it: change θ or φ all you like, and |α|² + |β|² = 1 stays true automatically. The readout under the sphere confirms this directly — try dragging to an extreme angle and check that the line still sums to 1.</p>
 
       <h3>A few named states</h3>
       <p>Most of what you'll read elsewhere refers back to these six points by name:</p>
@@ -312,6 +312,10 @@ print("Probability of measuring 1:", abs(state[1])**2)</textarea>
         </div>
         <figcaption>The step list shows the exact 4-amplitude state after every gate — including how CNOT changes the math differently from any single-qubit gate. "Run on simulator" samples 1024 simulated measurement shots from the exact probabilities, the same ideal-vs-sampled distinction real hardware dashboards show.</figcaption>
       </figure>
+
+      <div class="locked-banner" style="color: var(--signal); background: var(--signal-dim); border-color: var(--signal);">
+        Want the full toolkit — 4 qubits, CNOT/CZ/SWAP, OpenQASM, a Q-sphere, and a gate-matrix inspector? <a href="../composer.html"><strong>Open the Quantum Composer →</strong></a>
+      </div>
 
       <figure class="qc-figure code-cell" id="mq-code-cell">
         <div class="figure-label"><span>Fig. 3.6 — the code behind your two-qubit circuit</span><span class="code-status"></span></div>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quantum Composer — Quantum Cookbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="css/composer.css" />
+</head>
+<body>
+
+<div class="composer-topbar">
+  <div class="composer-title">
+    <a class="back-link" href="chapters/ch03-bloch-sphere.html">← back to Ch. 3</a>
+    <h1>Quantum Composer</h1>
+  </div>
+  <div class="scope-note">Clifford+T, CNOT/CZ/SWAP, measurement — 4 qubits. Rotation &amp; multi-control gates coming later.</div>
+</div>
+
+<div class="composer-grid">
+  <!-- Palette -->
+  <div class="palette-panel">
+    <div class="palette-section-title">Hadamard</div>
+    <div class="palette-grid">
+      <div class="pal-tile g-h" draggable="true" data-gate="H">H</div>
+    </div>
+
+    <div class="palette-section-title">Pauli</div>
+    <div class="palette-grid">
+      <div class="pal-tile g-pauli" draggable="true" data-gate="I">I</div>
+      <div class="pal-tile g-pauli" draggable="true" data-gate="X">X</div>
+      <div class="pal-tile g-pauli" draggable="true" data-gate="Y">Y</div>
+      <div class="pal-tile g-pauli" draggable="true" data-gate="Z">Z</div>
+    </div>
+
+    <div class="palette-section-title">Phase family</div>
+    <div class="palette-grid">
+      <div class="pal-tile g-phase" draggable="true" data-gate="S">S</div>
+      <div class="pal-tile g-phase" draggable="true" data-gate="Sdg">S†</div>
+      <div class="pal-tile g-phase" draggable="true" data-gate="T">T</div>
+      <div class="pal-tile g-phase" draggable="true" data-gate="Tdg">T†</div>
+    </div>
+
+    <div class="palette-section-title">Multi-qubit</div>
+    <div class="palette-grid">
+      <div class="pal-tile g-multi" draggable="true" data-gate="CNOT">CNOT</div>
+      <div class="pal-tile g-multi" draggable="true" data-gate="CZ">CZ</div>
+      <div class="pal-tile g-multi" draggable="true" data-gate="SWAP">SWAP</div>
+    </div>
+
+    <div class="palette-section-title">Readout</div>
+    <div class="palette-grid">
+      <div class="pal-tile g-measure" draggable="true" data-gate="Measure">M</div>
+    </div>
+  </div>
+
+  <!-- Circuit -->
+  <div class="circuit-panel">
+    <div class="circuit-toolbar">
+      <button class="btn-dark is-run" id="qc-run">Recompute ▸</button>
+      <button class="btn-dark" id="qc-clear">Clear circuit</button>
+    </div>
+    <div class="wires-wrap">
+      <div id="qc-wires"></div>
+      <div class="creg-row">
+        <div class="creg-label">c4</div>
+      </div>
+      <div class="two-q-connectors" id="qc-connectors"></div>
+    </div>
+  </div>
+
+  <!-- Right sidebar -->
+  <div class="side-panel">
+    <div class="side-section">
+      <h2>OpenQASM 2.0</h2>
+      <div class="qasm-code" id="qc-qasm"></div>
+    </div>
+    <div class="side-section" style="flex:1;">
+      <h2>Gate inspector <span style="font-size:10px;">(click a placed gate)</span></h2>
+      <div id="qc-inspector"><p class="inspector-empty">Click any gate on the circuit to see its matrix and a short explanation here — this is the panel IBM's composer doesn't have.</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-grid">
+  <div class="bottom-panel">
+    <h2>Probabilities</h2>
+    <div class="prob-chart" id="qc-probchart"></div>
+  </div>
+  <div class="bottom-panel">
+    <h2>Q-sphere</h2>
+    <div class="qsphere-wrap">
+      <canvas id="qsphere-canvas"></canvas>
+      <div id="qsphere-labels"></div>
+      <div class="phase-wheel-wrap">
+        <div class="phase-wheel"></div>
+        <div class="phase-wheel-labels">phase: 0 → 2π<br/>size: probability</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+<script src="js/composer.js"></script>
+</body>
+</html>
