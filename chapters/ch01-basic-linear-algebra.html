@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 1 — Basic Linear Algebra · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live is-current" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <span class="toc-chapter is-locked">2. Inner & Outer Product</span>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <span class="toc-chapter is-locked">4. Unitary & Hermitian</span>
+      <span class="toc-chapter is-locked">5. Tensor / Kronecker Product</span>
+      <span class="toc-chapter is-locked">6. Commutation Relations</span>
+      <span class="toc-chapter is-locked">7. Postulates & Measurement</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <span class="toc-chapter is-locked">8–13. Density matrices → Kraus → damping</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <span class="toc-chapter is-locked">14–19. Teleportation → GHZ/W → Dicke</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <span class="toc-chapter is-locked">22–31. Parallelism → Shor</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part I · Chapter 1</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Basic Linear Algebra</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~20 min</span>
+        <span><b>Prerequisites</b> none</span>
+        <span><b>Tools</b> vector plane, matrix transformer, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <p class="lede">Everything in this book eventually comes down to multiplying a small list of numbers by a small grid of numbers. That's all a qubit state is, and that's all a gate is. The only thing quantum mechanics adds to ordinary linear algebra is that the numbers are allowed to be complex — the rules themselves don't change at all.</p>
+
+      <h2>What a vector is, here</h2>
+      <p>A vector is just an ordered list of numbers, written as a column:</p>
+      <p style="text-align:center; font-size: 18px;">v = [v₁, v₂, …, vₙ]ᵗ</p>
+      <p>For most of this chapter n = 2, because a single qubit's state will turn out to be a 2-entry vector. Everything below works identically for any size.</p>
+
+      <h2>Adding vectors</h2>
+      <p>Vector addition is component-by-component: add the first entries together, add the second entries together. Geometrically, this is the familiar "tip-to-tail" rule — slide the second arrow so its tail sits at the first arrow's tip, and the sum is the arrow from the very start to the very end.</p>
+
+      <figure class="qc-figure">
+        <div class="figure-label"><span>Fig. 1.1 — drag either vector</span><span>a + b</span></div>
+        <div class="figure-body">
+          <div class="vec-plane-wrap"><svg id="vec-add-svg" width="280" height="280" viewBox="0 0 280 280"></svg></div>
+          <div class="vec-readout" id="vec-add-readout"></div>
+        </div>
+        <figcaption>Blue is a, gray is b, the dashed line shows b moved to start at a's tip (tip-to-tail), and amber is the resulting sum a + b.</figcaption>
+      </figure>
+
+      <h3>Scalar multiplication</h3>
+      <p>Multiplying a vector by a single number k scales every entry by k: (kv)ᵢ = k·vᵢ. Geometrically that stretches (|k| &gt; 1), shrinks (|k| &lt; 1), or reverses (k &lt; 0) the arrow without changing its direction otherwise. You'll see this as a special case of the next section — try setting the matrix below to <span class="mono">[[k,0],[0,k]]</span> and watch it scale your vector uniformly.</p>
+
+      <h2>Matrices as transformations</h2>
+      <p>A matrix is a grid of numbers that turns one vector into another. For a 2×2 matrix acting on a 2-entry vector, the rule is:</p>
+      <div id="mv-formula" style="text-align:center; margin: 14px 0;">$$\begin{bmatrix}a&b\\c&d\end{bmatrix}\begin{bmatrix}v_1\\v_2\end{bmatrix}=\begin{bmatrix}av_1+bv_2\\cv_1+dv_2\end{bmatrix}$$</div>
+      <p>Each output entry is a weighted sum of the input entries — nothing more exotic than that. The widget below lets you edit the matrix directly and drag the vector, so you can watch exactly which matrices stretch, rotate, reflect, or swap a vector's direction.</p>
+
+      <figure class="qc-figure">
+        <div class="figure-label"><span>Fig. 1.2 — edit the matrix, drag the vector</span><span>v → Mv</span></div>
+        <div class="figure-body">
+          <div class="matrix-controls">
+            <div class="matrix-input-grid">
+              <input type="number" id="m00" step="0.5" /><input type="number" id="m01" step="0.5" />
+              <input type="number" id="m10" step="0.5" /><input type="number" id="m11" step="0.5" />
+            </div>
+            <div class="preset-row">
+              <button class="matrix-preset" data-matrix="[[1,0],[0,1]]">Identity</button>
+              <button class="matrix-preset" data-matrix="[[2,0],[0,2]]">Scale ×2</button>
+              <button class="matrix-preset" data-matrix="[[0,-1],[1,0]]">Rotate 90°</button>
+              <button class="matrix-preset" data-matrix="[[1,0],[0,-1]]">Reflect over x-axis</button>
+              <button class="matrix-preset" data-matrix="[[0,1],[1,0]]">Swap (X-like)</button>
+              <button class="matrix-preset" data-matrix="[[1,1],[0,1]]">Shear</button>
+            </div>
+          </div>
+          <div class="vec-plane-wrap"><svg id="vec-transform-svg" width="280" height="280" viewBox="0 0 280 280"></svg></div>
+          <div class="vec-readout" id="vec-transform-readout"></div>
+          <div class="transform-eq" id="vec-transform-eq"></div>
+        </div>
+        <figcaption>Blue is your input vector v, amber is the output Mv. "Swap (X-like)" is worth lingering on — it's the exact real-number shadow of the X gate from Ch. 3.</figcaption>
+      </figure>
+
+      <h3>This is literally what a quantum gate does</h3>
+      <p>Go back to Ch. 3's gate buttons for a moment: every one of them was a 2×2 matrix multiplying a 2-entry vector — exactly the operation in Fig. 1.2, just with complex entries and one extra rule (the result always has to land back on the unit-normalized state space, which is why gate matrices specifically have to be unitary — more on that in Ch. 4). The X gate <em>is</em> the "Swap" preset above, generalized to complex numbers. There's no new machinery between this chapter and that one — only new numbers.</p>
+
+      <h2>Linear combinations and basis vectors</h2>
+      <p>A linear combination is just a sum of scaled vectors: c₁v₁ + c₂v₂ + …. Two special vectors make this especially useful in 2 dimensions — the standard basis:</p>
+      <p style="text-align:center; font-size: 17px;">e₁ = [1, 0]ᵗ      e₂ = [0, 1]ᵗ</p>
+      <p>Any 2-entry vector v = [v₁, v₂]ᵗ can be written as the linear combination v = v₁e₁ + v₂e₂ — the vector's own entries are exactly the coefficients needed to build it back out of the basis. Hold onto that sentence. In Ch. 3, e₁ and e₂ get renamed |0⟩ and |1⟩, and "v₁e₁ + v₂e₂" gets renamed "superposition." It's the identical fact, wearing different notation.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 1.3 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+a = np.array([1.5, 1.0])
+b = np.array([1.0, -1.2])
+
+print("a + b =", a + b)
+print("3 * a =", 3 * a)
+
+M = np.array([[0, -1],
+              [1,  0]])   # 90-degree rotation
+v = np.array([1.4, 0.8])
+print("M @ v =", M @ v)
+
+e1 = np.array([1, 0])
+e2 = np.array([0, 1])
+print("v1*e1 + v2*e2 =", v[0]*e1 + v[1]*e2, " (should equal v itself)")</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>Same numbers as Fig. 1.1 and 1.2 — edit and re-run to check your own examples against the widgets above.</figcaption>
+      </figure>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: linear algebra basics</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Video</span><a href="https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab" target="_blank" rel="noopener">3Blue1Brown — Essence of Linear Algebra</a><span class="res-note">The best visual intuition for vectors and matrices as transformations, full stop.</span></li>
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §2.1</a><span class="res-note">The linear algebra primer the rest of the book leans on.</span></li>
+          <li><span class="res-type">Tool</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.matmul.html" target="_blank" rel="noopener">NumPy docs — matmul / @</a><span class="res-note">Reference for the exact operator used in Fig. 1.3's code cell.</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch01-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">If a = (2, 1) and b = (−1, 3), what is a + b?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>(1, 4) — add the components separately: (2 + −1, 1 + 3).</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch01-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Geometrically, what does multiplying a vector by a negative scalar do?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>It reverses the vector's direction (in addition to scaling its length by the absolute value of the scalar).</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch01-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What is [[0,1],[1,0]] @ [3, 5]ᵗ?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>[5, 3]ᵗ — this matrix swaps the two entries, exactly the real-number shadow of the X gate.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch01-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Why is v = v₁e₁ + v₂e₂ called a "linear combination," and why does this matter later in the book?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>It's a sum of basis vectors each scaled by a coefficient — exactly the definition of a linear combination. It matters because superposition (Ch. 3) is this exact same structure, with e₁/e₂ renamed |0⟩/|1⟩ and the coefficients renamed probability amplitudes.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch01-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What's the one rule that quantum gate matrices have to satisfy that an arbitrary 2×2 matrix in Fig. 1.2 doesn't?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>The matrix has to be unitary — it has to send every valid (normalized) state to another valid (normalized) state. Fig. 1.2's "Shear" preset, for example, is not unitary and would never appear as a real quantum gate. Ch. 4 covers exactly what unitary means and why it's required.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/ch01-vectors.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>
