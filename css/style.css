@@ -67,6 +67,7 @@ h1, h2, h3 {
 
 code, .mono { font-family: var(--font-mono); }
 
+/* ---------- Status tags (borrowed from AIEFS's Complete/In Progress/Planned) ---------- */
 .status-tag {
   font-family: var(--font-mono);
   font-size: 10.5px;
@@ -80,6 +81,7 @@ code, .mono { font-family: var(--font-mono); }
 .status-tag.is-cooking { background: var(--amber-bg); color: var(--amber); }
 .status-tag.is-planned { background: transparent; color: var(--ink-faint); border: 1px solid var(--rule); }
 
+/* ---------- Top nav ---------- */
 .site-header {
   border-bottom: 1px solid var(--rule);
   background: var(--paper);
@@ -115,6 +117,7 @@ code, .mono { font-family: var(--font-mono); }
 }
 .site-nav a:hover { color: var(--signal); }
 
+/* ---------- Page shell ---------- */
 .page {
   display: flex;
   max-width: 980px;
@@ -165,6 +168,7 @@ article.chapter-body p { margin: 0 0 1.1em; }
 article.chapter-body h2 { font-size: 25px; margin: 2.2em 0 0.6em; }
 article.chapter-body h3 { font-size: 19px; margin: 1.7em 0 0.5em; color: var(--ink); }
 
+/* ---------- Lesson header (plain doc metadata row — replaces "recipe card") ---------- */
 .lesson-header {
   max-width: var(--max-width);
   border-top: 1px solid var(--ink);
@@ -183,6 +187,8 @@ article.chapter-body h3 { font-size: 19px; margin: 1.7em 0 0.5em; color: var(--i
 }
 .lesson-meta-row span b { color: var(--ink); font-weight: 500; }
 
+/* ---------- Figure block: the signature element ---------- */
+/* Every interactive widget is framed as a numbered, captioned textbook figure. */
 figure.qc-figure {
   max-width: var(--max-width);
   margin: 34px 0;
@@ -210,6 +216,7 @@ figure.qc-figure figcaption {
   font-family: var(--font-body);
 }
 
+/* Bloch sphere widget layout */
 .bloch-layout { display: flex; gap: 20px; flex-wrap: wrap; }
 .bloch-canvas-wrap { flex: 1 1 280px; min-width: 240px; }
 #bloch-canvas { width: 100%; height: 280px; display: block; background: var(--paper); border: 1px solid var(--rule); }
@@ -226,6 +233,7 @@ figure.qc-figure figcaption {
 }
 .bloch-2d-wrap { display: flex; justify-content: center; margin-top: 10px; }
 
+/* Code cell */
 .code-cell textarea {
   width: 100%;
   min-height: 110px;
@@ -266,6 +274,7 @@ figure.qc-figure figcaption {
 }
 .code-output.is-visible { display: block; }
 
+/* Quiz card — "Check your understanding" (AIEFS's /check-understanding language) */
 .quiz-card {
   max-width: var(--max-width);
   margin: 28px 0;
@@ -283,6 +292,7 @@ figure.qc-figure figcaption {
 .quiz-rate.is-visible { display: flex; }
 .quiz-rate button { flex: 1; }
 
+/* Resource links — "Further reading", plain endnote list */
 .resource-panel { max-width: var(--max-width); margin: 22px 0; }
 .resource-toggle {
   font-family: var(--font-mono);
@@ -302,6 +312,7 @@ figure.qc-figure figcaption {
 .resource-list .res-type { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; color: var(--ink-faint); margin-right: 6px; }
 .resource-list .res-note { display: block; color: var(--ink-muted); font-size: 13px; }
 
+/* Floating review button */
 #review-fab {
   position: fixed; bottom: 22px; right: 22px;
   background: var(--ink); color: var(--paper);
@@ -319,6 +330,7 @@ figure.qc-figure figcaption {
 .review-modal { background: var(--paper-raised); border: 1px solid var(--rule); max-width: 520px; width: 100%; padding: 24px 26px; }
 .review-modal-close { float: right; background: none; border: none; color: var(--ink-faint); cursor: pointer; font-size: 13px; }
 
+/* Catalog list (landing page TOC, replaces card grid) */
 .catalog-part { border-top: 1px solid var(--ink); padding: 18px 0; }
 .catalog-part-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .catalog-part-head h3 { margin: 0; font-size: 18px; }
@@ -338,6 +350,7 @@ figure.qc-figure figcaption {
   background: var(--amber-bg);
 }
 
+/* Landing hero */
 .hero { max-width: var(--max-width); padding: 10px 0 16px; }
 .hero h1 { font-size: 40px; margin: 14px 0 10px; }
 
@@ -350,7 +363,6 @@ footer.site-footer {
   font-size: 11.5px;
   color: var(--ink-faint);
 }
-
 
 /* ---------- Gate buttons (added per feedback: real interactive gates) ---------- */
 .gate-row {
@@ -379,6 +391,7 @@ footer.site-footer {
   margin-top: 8px;
 }
 
+/* States reference table */
 table.qc-table {
   width: 100%;
   border-collapse: collapse;
@@ -429,6 +442,7 @@ table.qc-table td.mono { color: var(--signal); }
 }
 .gate-card p { font-size: 14px; color: var(--ink-muted); margin: 0; }
 
+/* ---------- Circuit builder ---------- */
 .palette-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .gate-tile {
   width: 44px; height: 40px;
@@ -561,9 +575,36 @@ table.qc-table td.mono { color: var(--signal); }
   overflow-x: auto;
 }
 
+/* Histogram */
 .histogram-panel { display: flex; align-items: flex-end; gap: 18px; height: 160px; padding: 10px 10px 0; margin-top: 16px; border-top: 1px solid var(--rule); }
 .hist-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
 .hist-bar-track { width: 100%; max-width: 56px; height: 120px; display: flex; align-items: flex-end; background: var(--paper); border: 1px solid var(--rule); }
 .hist-bar { width: 100%; background: var(--signal); height: 0%; transition: height 0.6s cubic-bezier(0.2,0.8,0.2,1); }
 .hist-label { font-family: var(--font-mono); font-size: 12px; color: var(--ink); margin-top: 6px; }
 .hist-val { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); margin-top: 2px; }
+
+/* ---------- Ch.1 vector/matrix widgets ---------- */
+.vec-plane-wrap { display: flex; justify-content: center; }
+.vec-plane-wrap svg { background: var(--paper); border: 1px solid var(--rule); touch-action: none; }
+.vec-readout {
+  font-family: var(--font-mono); font-size: 13px; color: var(--signal);
+  background: var(--paper); border: 1px solid var(--rule); padding: 8px 12px; margin-top: 10px;
+}
+.matrix-controls { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; margin-bottom: 12px; }
+.matrix-input-grid {
+  display: grid; grid-template-columns: repeat(2, 50px); gap: 6px;
+  padding: 8px 10px; border-left: 3px solid var(--ink); border-right: 3px solid var(--ink);
+}
+.matrix-input-grid input {
+  width: 50px; height: 36px; text-align: center;
+  font-family: var(--font-mono); font-size: 14px;
+  border: 1px solid var(--rule); background: var(--paper-raised); color: var(--ink);
+}
+.preset-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.matrix-preset {
+  font-family: var(--font-mono); font-size: 11.5px;
+  border: 1px solid var(--ink); background: var(--paper); color: var(--ink);
+  padding: 6px 10px; cursor: pointer; border-radius: var(--radius);
+}
+.matrix-preset:hover { background: var(--ink); color: var(--paper); }
+.transform-eq { margin-top: 12px; font-size: 15px; }

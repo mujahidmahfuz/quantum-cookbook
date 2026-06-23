@@ -93,6 +93,55 @@
     });
   }
 
+  // ---------- Fig 1.4: eigenvalues / eigenvectors of M ----------
+  function lineSvg(dx, dy, color) {
+    // full line through the origin in direction (dx,dy), both ways
+    const p1 = toPx(dx, dy), p2 = toPx(-dx, -dy);
+    return `<line x1="${p1.px}" y1="${p1.py}" x2="${p2.px}" y2="${p2.py}" stroke="${color}" stroke-width="2" stroke-dasharray="6 4" />`;
+  }
+
+  function eigenvectorFor(M, lambda) {
+    const a = M[0][0], b = M[0][1], c = M[1][0], d = M[1][1];
+    let x, y;
+    if (Math.abs(b) > 1e-9) { x = b; y = lambda - a; }
+    else if (Math.abs(c) > 1e-9) { x = lambda - d; y = c; }
+    else { x = Math.abs(lambda - a) < 1e-9 ? 1 : 0; y = Math.abs(lambda - a) < 1e-9 ? 0 : 1; }
+    const len = Math.hypot(x, y) || 1;
+    return { x: (x / len) * 2.4, y: (y / len) * 2.4 };
+  }
+
+  function computeEigen(M) {
+    const a = M[0][0], b = M[0][1], c = M[1][0], d = M[1][1];
+    const trace = a + d, det = a * d - b * c;
+    const disc = trace * trace - 4 * det;
+    if (disc >= 0) {
+      const sq = Math.sqrt(disc);
+      const l1 = (trace + sq) / 2, l2 = (trace - sq) / 2;
+      return { real: true, l1, l2, v1: eigenvectorFor(M, l1), v2: eigenvectorFor(M, l2) };
+    }
+    const sq = Math.sqrt(-disc);
+    return { real: false, reL: trace / 2, imL: sq / 2 };
+  }
+
+  function renderEigen() {
+    const svg = document.getElementById("eigen-svg");
+    if (!svg) return;
+    const eig = computeEigen(M);
+    const readout = document.getElementById("eigen-readout");
+
+    if (eig.real) {
+      svg.innerHTML = gridSvg() + lineSvg(eig.v1.x, eig.v1.y, "#2748c9") + lineSvg(eig.v2.x, eig.v2.y, "#a8702b");
+      if (readout) {
+        readout.textContent = `λ₁ = ${round1(eig.l1)}  (blue line, direction ≈ (${round1(eig.v1.x)}, ${round1(eig.v1.y)}))    λ₂ = ${round1(eig.l2)}  (amber line, direction ≈ (${round1(eig.v2.x)}, ${round1(eig.v2.y)}))`;
+      }
+    } else {
+      svg.innerHTML = gridSvg();
+      if (readout) {
+        readout.textContent = `No real eigenvectors — eigenvalues are complex: λ = ${round1(eig.reL)} ± ${round1(eig.imL)}i. This matrix is a pure rotation (plus scaling): every direction gets rotated, so none survives as its own eigenvector.`;
+      }
+    }
+  }
+
   // ---------- Drag state (module-level, listeners attached ONCE per svg, not per render) ----------
   let dragTarget = null; // "a" | "b" | "v" | null
   let activeSvg = null;
@@ -156,6 +205,7 @@
         const r = Math.floor(idx / 2), c = idx % 2;
         M[r][c] = isNaN(val) ? 0 : val;
         renderTransformDynamic();
+        renderEigen();
       });
     });
     document.querySelectorAll(".matrix-preset").forEach((btn) => {
@@ -163,6 +213,7 @@
         M = JSON.parse(btn.dataset.matrix);
         syncMatrixInputs();
         renderTransformDynamic();
+        renderEigen();
       });
     });
   }
@@ -174,6 +225,7 @@
       syncMatrixInputs();
       wireMatrixInputs();
       renderTransformDynamic();
+      renderEigen();
     }
   }
 

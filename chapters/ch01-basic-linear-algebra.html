@@ -119,6 +119,45 @@
       <h3>This is literally what a quantum gate does</h3>
       <p>Go back to Ch. 3's gate buttons for a moment: every one of them was a 2×2 matrix multiplying a 2-entry vector — exactly the operation in Fig. 1.2, just with complex entries and one extra rule (the result always has to land back on the unit-normalized state space, which is why gate matrices specifically have to be unitary — more on that in Ch. 4). The X gate <em>is</em> the "Swap" preset above, generalized to complex numbers. There's no new machinery between this chapter and that one — only new numbers.</p>
 
+      <h2>Eigenvalues and eigenvectors</h2>
+      <p>Look back at Fig. 1.2 for a second. For almost every choice of v, the matrix M knocks the vector off its original line — Mv points somewhere genuinely different from v. But for <em>some</em> special directions, M doesn't rotate the vector at all. It only stretches or shrinks it. Those special directions are called <strong>eigenvectors</strong>, and the stretch factor is the corresponding <strong>eigenvalue</strong>:</p>
+      <p style="text-align:center; font-size: 18px;">Mv = λv,  v ≠ 0</p>
+      <p>In words: v is an eigenvector of M if applying M to v gives back the exact same direction, just scaled by the number λ.</p>
+
+      <h3>Finding them</h3>
+      <p>Rearranging Mv = λv gives (M − λI)v = 0. A nonzero v can only solve this if the matrix (M − λI) fails to be invertible — i.e. its determinant is zero. For a 2×2 matrix [[a,b],[c,d]], writing that out gives the <strong>characteristic equation</strong>:</p>
+      <div style="text-align:center; margin: 14px 0;">$$\lambda^2 - (a+d)\lambda + (ad-bc) = 0$$</div>
+      <p>That's just a quadratic in λ — the coefficients are the matrix's trace (a+d) and determinant (ad−bc). Solve it with the quadratic formula and you have both eigenvalues.</p>
+
+      <p><strong>Worked example.</strong> Take M = [[2,1],[1,2]]. Trace = 4, determinant = 3, so λ² − 4λ + 3 = 0, which factors as (λ−1)(λ−3) = 0: the eigenvalues are λ = 1 and λ = 3. Plugging λ = 3 back into (M − 3I)v = 0 gives [[−1,1],[1,−1]]v = 0, solved by v = (1, 1). Plugging in λ = 1 gives v = (1, −1). Check it yourself in the code cell below, or just watch Fig. 1.4 confirm it live.</p>
+
+      <figure class="qc-figure">
+        <div class="figure-label"><span>Fig. 1.4 — eigenvectors of Fig. 1.2's current matrix</span><span>edit the matrix above</span></div>
+        <div class="figure-body">
+          <div class="vec-plane-wrap"><svg id="eigen-svg" width="280" height="280" viewBox="0 0 280 280"></svg></div>
+          <div class="vec-readout" id="eigen-readout"></div>
+        </div>
+        <figcaption>The dashed lines are the eigenvector directions of whatever matrix you've set in Fig. 1.2 — change that matrix and these update instantly. Try the "Rotate 90°" preset: a pure rotation has no real eigenvector at all, which the panel will tell you directly.</figcaption>
+      </figure>
+
+      <h3>Why this matters in quantum computing</h3>
+      <p>This is not a side topic — it's arguably the single most-used piece of linear algebra in the entire subject. A few direct connections you'll meet by name later in this book:</p>
+      <ul>
+        <li><strong>Measurement outcomes are eigenvalues.</strong> An observable (a measurable quantity, like spin) is represented by a Hermitian matrix. The only values you can ever actually measure are that matrix's eigenvalues — Ch. 4 and Ch. 7 make this precise, and Ch. 4 explains exactly why Hermitian specifically guarantees those eigenvalues come out real, since a measurement outcome that was a complex number would be physically meaningless.</li>
+        <li><strong>Eigenvectors are the states measurement collapses to.</strong> Measuring an observable forces the system into one of that observable's eigenvectors. The Pauli Z gate's eigenvectors are exactly |0⟩ and |1⟩ (eigenvalues +1 and −1); Pauli X's eigenvectors are |+⟩ and |−⟩. You already met all four states in Ch. 3 — you just hadn't met the word "eigenvector" yet.</li>
+        <li><strong>Solving a quantum system means diagonalizing its Hamiltonian.</strong> The allowed energy levels of a quantum system are the eigenvalues of its Hamiltonian operator; the eigenvectors are the corresponding stable energy states. "Diagonalizing the Hamiltonian" — a phrase you'll see constantly in any quantum mechanics course — just means finding these.</li>
+      </ul>
+
+      <h3>Eigenvalues show up everywhere else, too</h3>
+      <p>None of this machinery is quantum-specific — quantum mechanics just happens to be a field where eigenvalues are unavoidable. A few examples from elsewhere, each genuinely using the identical Mv = λv idea from this section:</p>
+      <ul>
+        <li><strong>Data science (PCA):</strong> the eigenvectors of a dataset's covariance matrix are its principal components — the directions of greatest variance; the eigenvalues tell you how much variance each direction explains.</li>
+        <li><strong>Search engines:</strong> Google's original PageRank score is the dominant eigenvector of a giant matrix encoding which pages link to which.</li>
+        <li><strong>Structural engineering:</strong> the eigenvalues of a structure's stiffness matrix are its natural resonant frequencies; the eigenvectors are the shapes it physically vibrates into at each one.</li>
+        <li><strong>Markov chains:</strong> a system's long-run steady-state distribution is the eigenvector of its transition matrix with eigenvalue exactly 1.</li>
+      </ul>
+      <p>Same equation, four unrelated fields. That's a fairly reliable sign you've found something fundamental rather than something specific to one subject.</p>
+
       <h2>Linear combinations and basis vectors</h2>
       <p>A linear combination is just a sum of scaled vectors: c₁v₁ + c₂v₂ + …. Two special vectors make this especially useful in 2 dimensions — the standard basis:</p>
       <p style="text-align:center; font-size: 17px;">e₁ = [1, 0]ᵗ      e₂ = [0, 1]ᵗ</p>
@@ -215,6 +254,30 @@ print("v1*e1 + v2*e2 =", v[0]*e1 + v[1]*e2, " (should equal v itself)")</textare
       <p class="quiz-question">What's the one rule that quantum gate matrices have to satisfy that an arbitrary 2×2 matrix in Fig. 1.2 doesn't?</p>
       <button class="btn js-reveal">Show answer</button>
       <div class="quiz-answer"><p>The matrix has to be unitary — it has to send every valid (normalized) state to another valid (normalized) state. Fig. 1.2's "Shear" preset, for example, is not unitary and would never appear as a real quantum gate. Ch. 4 covers exactly what unitary means and why it's required.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch01-q6">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">For M = [[2,1],[1,2]], confirm that v = (1,1) is an eigenvector, and find its eigenvalue.</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Mv = (2·1+1·1, 1·1+2·1) = (3,3) = 3·(1,1) — same direction as v, scaled by 3. So λ = 3.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch01-q7">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Why must quantum observables specifically be Hermitian matrices, rather than just any matrix?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Because measurement outcomes are the matrix's eigenvalues, and a measured quantity has to be a real number. Hermitian matrices are exactly the ones guaranteed to have real eigenvalues — an arbitrary matrix could have complex ones, which wouldn't correspond to anything physically measurable.</p></div>
       <div class="quiz-rate">
         <button class="btn" data-quality="2">Hard</button>
         <button class="btn is-signal" data-quality="4">Good</button>
