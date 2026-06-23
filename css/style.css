@@ -398,3 +398,82 @@ table.qc-table th {
   letter-spacing: 0.04em;
 }
 table.qc-table td.mono { color: var(--signal); }
+
+/* ---------- Gate reference cards ---------- */
+.gate-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin: 20px 0 30px;
+}
+.gate-card {
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  padding: 16px 18px;
+}
+.gate-card h4 {
+  margin: 0 0 6px;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--signal);
+}
+.gate-card .gate-matrix { margin: 8px 0; font-size: 14px; }
+.gate-card .gate-effect {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--amber);
+  background: var(--amber-bg);
+  display: inline-block;
+  padding: 2px 7px;
+  margin-bottom: 8px;
+}
+.gate-card p { font-size: 14px; color: var(--ink-muted); margin: 0; }
+
+.palette-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.gate-tile {
+  width: 44px; height: 40px;
+  border: 1px solid var(--ink);
+  background: var(--paper-raised);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: grab;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius);
+}
+.gate-tile:active { cursor: grabbing; }
+
+.circuit-rail {
+  display: flex;
+  gap: 6px;
+  padding: 14px;
+  background: var(--paper);
+  border: 1px dashed var(--rule-strong);
+  margin-bottom: 14px;
+  overflow-x: auto;
+}
+.circuit-slot {
+  width: 48px; height: 48px;
+  flex-shrink: 0;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--ink-faint);
+}
+.circuit-slot.is-filled { color: var(--ink); border-color: var(--ink); cursor: pointer; }
+.circuit-slot.is-over { border-color: var(--signal); background: var(--signal-dim); }
+.circuit-slot.is-active { background: var(--amber-bg); border-color: var(--amber); color: var(--amber); }
+
+.circuit-actions { display: flex; gap: 10px; margin-bottom: 16px; }
+.circuit-steps {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  white-space: pre-wrap;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  padding: 12px 14px;
+  color: var(--ink);
+  line-height: 1.6;
+}

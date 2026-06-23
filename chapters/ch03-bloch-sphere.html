@@ -134,17 +134,48 @@
       <h3>Global phase doesn't move the point</h3>
       <p>Multiply the whole state by <span class="mono">e^{iα}</span> for any real α, and the Bloch vector doesn't move at all — global phase is invisible to the sphere, and (as you'll confirm in Ch. 7) invisible to any measurement too. Only the <em>relative</em> phase between the |0⟩ and |1⟩ components — the φ slider above — actually changes where the point sits.</p>
 
-      <h3>Gates are rotations of this exact sphere</h3>
-      <p>A single-qubit gate is a 2×2 matrix that takes one valid state to another valid state — geometrically, that means every gate has to be a rotation (or a reflection that's really a rotation about some axis) of the Bloch sphere, since that's the only kind of map that keeps every point on the surface. Click the buttons in Fig. 3.1 and watch what each one actually does:</p>
-      <ul>
-        <li><span class="mono">X</span> — 180° flip that swaps |0⟩ and |1⟩ (north pole ↔ south pole)</li>
-        <li><span class="mono">Y</span> — 180° flip about a different axis, same poles-swap, different effect on phase</li>
-        <li><span class="mono">Z</span> — leaves |0⟩ and |1⟩ fixed, but flips the phase of everything in between (watch |+⟩ go to |−⟩)</li>
-        <li><span class="mono">H</span> (Hadamard) — takes |0⟩ straight to the equator; takes the equator's |+⟩ back to |0⟩</li>
-        <li><span class="mono">S</span> — a 90° rotation around the vertical axis (only moves points off the poles)</li>
-        <li><span class="mono">T</span> — a gentler 45° version of the same rotation as S</li>
-      </ul>
-      <p>None of this is metaphorical — every button click above is a real 2×2 complex matrix multiplying the current (c₀, c₁), with the result re-plotted on the sphere. The code cell below shows the same Hadamard operation as raw matrix arithmetic, so you can see both views of the identical fact.</p>
+      <h3>Gate reference</h3>
+      <p>A single-qubit gate is a 2×2 matrix that takes one valid state to another valid state — geometrically, that means every gate has to be a rotation of the Bloch sphere, since that's the only kind of map that keeps every point on the surface. Click any button in Fig. 3.1 and compare what happens to the sphere against the matrix and rotation below — same fact, three ways of seeing it.</p>
+
+      <div class="gate-card-grid">
+        <div class="gate-card">
+          <h4>X — bit flip</h4>
+          <div class="gate-matrix">$$X=\begin{bmatrix}0&1\\1&0\end{bmatrix}$$</div>
+          <span class="gate-effect">θ → π−θ,  φ → −φ</span>
+          <p>180° rotation about the x-axis. Swaps |0⟩ and |1⟩ outright — the quantum analog of a classical NOT.</p>
+        </div>
+        <div class="gate-card">
+          <h4>Y — bit + phase flip</h4>
+          <div class="gate-matrix">$$Y=\begin{bmatrix}0&-i\\i&0\end{bmatrix}$$</div>
+          <span class="gate-effect">θ → π−θ,  φ → π−φ</span>
+          <p>180° rotation about the y-axis. Also swaps the poles, but picks up a different phase relationship than X — watch where |+⟩ ends up vs. where X sends it.</p>
+        </div>
+        <div class="gate-card">
+          <h4>Z — phase flip</h4>
+          <div class="gate-matrix">$$Z=\begin{bmatrix}1&0\\0&-1\end{bmatrix}$$</div>
+          <span class="gate-effect">θ unchanged,  φ → φ+π</span>
+          <p>180° rotation about the z-axis (the |0⟩/|1⟩ axis itself). Leaves the poles fixed entirely — it only does something visible to states already off the poles.</p>
+        </div>
+        <div class="gate-card">
+          <h4>H — Hadamard</h4>
+          <div class="gate-matrix">$$H=\tfrac{1}{\sqrt2}\begin{bmatrix}1&1\\1&-1\end{bmatrix}$$</div>
+          <span class="gate-effect">|0⟩ ↔ |+⟩,  |1⟩ ↔ |−⟩</span>
+          <p>180° rotation about the diagonal axis halfway between x and z. The gate that actually creates superposition from a classical-looking start — the one you'll use constantly.</p>
+        </div>
+        <div class="gate-card">
+          <h4>S — phase gate</h4>
+          <div class="gate-matrix">$$S=\begin{bmatrix}1&0\\0&i\end{bmatrix}$$</div>
+          <span class="gate-effect">θ unchanged,  φ → φ+90°</span>
+          <p>A quarter-turn rotation about the z-axis — half of a Z gate. Notice it does nothing at all to |0⟩ or |1⟩, only to states on the equator and in between.</p>
+        </div>
+        <div class="gate-card">
+          <h4>T — π/8 gate</h4>
+          <div class="gate-matrix">$$T=\begin{bmatrix}1&0\\0&e^{i\pi/4}\end{bmatrix}$$</div>
+          <span class="gate-effect">θ unchanged,  φ → φ+45°</span>
+          <p>Half of an S gate. Small, precise phase nudges like this are exactly what later algorithms (Ch. 29–31) chain together to build up large effects.</p>
+        </div>
+      </div>
+
 
       <div class="resource-panel">
         <button class="resource-toggle"><span class="chev">▸</span> Further reading: the Bloch sphere</button>
@@ -178,6 +209,44 @@ print("Probability of measuring 1:", abs(state[1])**2)</textarea>
           <div class="code-output"></div>
         </div>
         <figcaption>Applying a Hadamard gate to |0⟩ — edit the matrix and re-run. First run downloads a small Python runtime into the tab; after that it's instant.</figcaption>
+      </figure>
+
+      <h2>Build a sequence</h2>
+      <p>One gate at a time only goes so far. Drag gates from the palette into the slots below (or just click a gate to drop it in the next open slot) to build a real sequence — every step recomputes the actual state, the actual probabilities, and the actual Python that produced them. Everything here starts fresh from |0⟩.</p>
+
+      <figure class="qc-figure" id="circuit-widget">
+        <div class="figure-label"><span>Fig. 3.3 — drag, drop, and merge gates</span><span>starts from |0⟩</span></div>
+        <div class="figure-body">
+          <div class="palette-row">
+            <div class="gate-tile" draggable="true" data-gate="I">I</div>
+            <div class="gate-tile" draggable="true" data-gate="X">X</div>
+            <div class="gate-tile" draggable="true" data-gate="Y">Y</div>
+            <div class="gate-tile" draggable="true" data-gate="Z">Z</div>
+            <div class="gate-tile" draggable="true" data-gate="H">H</div>
+            <div class="gate-tile" draggable="true" data-gate="S">S</div>
+            <div class="gate-tile" draggable="true" data-gate="T">T</div>
+          </div>
+          <div class="circuit-rail" id="circuit-rail"></div>
+          <div class="circuit-actions">
+            <button class="btn is-signal" id="circuit-run">Run on Bloch sphere ▸</button>
+            <button class="btn" id="circuit-clear">Clear circuit</button>
+          </div>
+          <div class="circuit-steps" id="circuit-steps"></div>
+        </div>
+        <figcaption>Click "Run on Bloch sphere" to watch Fig. 3.1 animate through your exact sequence, gate by gate. Drag a placed gate onto another slot to reorder it.</figcaption>
+      </figure>
+
+      <figure class="qc-figure code-cell" id="circuit-code-cell">
+        <div class="figure-label"><span>Fig. 3.4 — the code behind your sequence</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false"></textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>This is generated directly from the slots above — every drag, drop, or click rewrites it. Hit Run to execute the actual numpy version of your circuit.</figcaption>
       </figure>
     </article>
 
@@ -238,8 +307,15 @@ print("Probability of measuring 1:", abs(state[1])**2)</textarea>
 <footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 <script src="../js/main.js"></script>
 <script src="../js/bloch-sphere.js"></script>
+<script src="../js/circuit-builder.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
 </body>
 </html>

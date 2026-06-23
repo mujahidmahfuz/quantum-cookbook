@@ -201,52 +201,76 @@
   };
 
   function applyGate(name) {
+    const { theta: targetTheta, phi: targetPhi } = computeNewAngles(name, theta, phi);
+    animateTo(targetTheta, targetPhi);
+  }
+
+  function computeNewAngles(name, fromTheta, fromPhi) {
     const M = GATES[name];
-    if (!M) return;
-    const c0 = { re: Math.cos(theta / 2), im: 0 };
-    const c1 = { re: Math.sin(theta / 2) * Math.cos(phi), im: Math.sin(theta / 2) * Math.sin(phi) };
+    const c0 = { re: Math.cos(fromTheta / 2), im: 0 };
+    const c1 = { re: Math.sin(fromTheta / 2) * Math.cos(fromPhi), im: Math.sin(fromTheta / 2) * Math.sin(fromPhi) };
 
     const newC0 = cAdd(cMul(M[0][0], c0), cMul(M[0][1], c1));
     const newC1 = cAdd(cMul(M[1][0], c0), cMul(M[1][1], c1));
 
-    // Strip global phase so c0 becomes real & non-negative, the canonical form our theta/phi parametrization assumes.
     const phase0 = Math.atan2(newC0.im, newC0.re);
     const mag0 = Math.hypot(newC0.re, newC0.im);
     const c1re = newC1.re * Math.cos(-phase0) - newC1.im * Math.sin(-phase0);
     const c1im = newC1.re * Math.sin(-phase0) + newC1.im * Math.cos(-phase0);
 
     const targetTheta = 2 * Math.acos(Math.max(-1, Math.min(1, mag0)));
-    let targetPhi = Math.atan2(c1im, c1re);
-
-    animateTo(targetTheta, targetPhi);
+    const targetPhi = Math.atan2(c1im, c1re);
+    return { theta: targetTheta, phi: targetPhi };
   }
 
   function animateTo(targetTheta, targetPhi) {
-    if (animId) cancelAnimationFrame(animId);
-    const startTheta = theta;
-    let startPhi = phi;
-    // shortest path for phi
-    let d = targetPhi - ((startPhi % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI));
-    while (d > Math.PI) d -= 2 * Math.PI;
-    while (d < -Math.PI) d += 2 * Math.PI;
-    const endPhi = startPhi + d;
-    const duration = 350;
-    const t0 = performance.now();
+    return new Promise((resolve) => {
+      if (animId) cancelAnimationFrame(animId);
+      const startTheta = theta;
+      const startPhi = phi;
+      let d = targetPhi - ((startPhi % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI));
+      while (d > Math.PI) d -= 2 * Math.PI;
+      while (d < -Math.PI) d += 2 * Math.PI;
+      const endPhi = startPhi + d;
+      const duration = 450;
+      const t0 = performance.now();
 
-    function step(now) {
-      const t = Math.min(1, (now - t0) / duration);
-      const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-      theta = startTheta + (targetTheta - startTheta) * ease;
-      phi = startPhi + (endPhi - startPhi) * ease;
-      updateVector();
-      if (t < 1) {
-        animId = requestAnimationFrame(step);
-      } else {
-        animId = null;
+      function step(now) {
+        const t = Math.min(1, (now - t0) / duration);
+        const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        theta = startTheta + (targetTheta - startTheta) * ease;
+        phi = startPhi + (endPhi - startPhi) * ease;
+        updateVector();
+        if (t < 1) {
+          animId = requestAnimationFrame(step);
+        } else {
+          animId = null;
+          resolve();
+        }
       }
-    }
-    animId = requestAnimationFrame(step);
+      animId = requestAnimationFrame(step);
+    });
   }
+
+  function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
+  async function runSequence(names, onStep) {
+    theta = 0; phi = 0; updateVector();
+    await sleep(150);
+    for (let i = 0; i < names.length; i++) {
+      const next = computeNewAngles(names[i], theta, phi);
+      await animateTo(next.theta, next.phi);
+      if (onStep) onStep(i, next);
+      await sleep(120);
+    }
+  }
+
+  window.QC = {
+    GATES,
+    computeNewAngles,
+    getAngles: () => ({ theta, phi }),
+    runSequence,
+  };
 
   function wireGateButtons() {
     document.querySelectorAll(".gate-btn").forEach((btn) => {
