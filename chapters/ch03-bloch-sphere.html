@@ -248,6 +248,83 @@ print("Probability of measuring 1:", abs(state[1])**2)</textarea>
         </div>
         <figcaption>This is generated directly from the slots above — every drag, drop, or click rewrites it. Hit Run to execute the actual numpy version of your circuit.</figcaption>
       </figure>
+
+      <h2>Two qubits, and the gate that connects them</h2>
+      <p>Everything so far has been a one-qubit gate — a 2×2 matrix touching a single wire. The moment you have two qubits, a new kind of gate becomes possible: one that acts on <em>both</em> wires at once, and can create exactly the kind of correlation that makes two qubits behave as something more than two separate qubits. That gate is <strong>CNOT</strong> — controlled-X.</p>
+
+      <div class="gate-card-grid">
+        <div class="gate-card">
+          <h4>CNOT — controlled-X</h4>
+          <div class="gate-matrix">$$\text{CNOT}_{0\to1}=\begin{bmatrix}1&0&0&0\\0&0&0&1\\0&0&1&0\\0&1&0&0\end{bmatrix}$$</div>
+          <span class="gate-effect">if control=1: flip target</span>
+          <p>A 4×4 matrix on the joint 2-qubit space — not a tensor product of two 2×2 gates, because <em>what happens to the target depends on the control's value</em>. That dependency is exactly what produces entanglement: after H on q0 then CNOT, the two qubits can no longer be described independently of each other (Ch. 17's GHZ/W states are this same idea pushed to more qubits).</p>
+        </div>
+      </div>
+
+      <p>Build it yourself: drag <span class="mono">H</span> onto q0's first column, then drag the <span class="mono">CNOT</span> tile onto q0 in the next column (this makes q0 the control, q1 the target automatically). Run it — you should land on 50% <span class="mono">00</span>, 50% <span class="mono">11</span>, and exactly 0% on <span class="mono">01</span> or <span class="mono">10</span>. That's the Bell state, the smallest possible example of entanglement.</p>
+
+      <figure class="qc-figure" id="mq-widget">
+        <div class="figure-label"><span>Fig. 3.5 — two-qubit circuit, drag gates onto either wire</span><span>starts from |00⟩</span></div>
+        <div class="figure-body">
+          <div class="mq-palette">
+            <div class="mq-tile" draggable="true" data-tile="I">I</div>
+            <div class="mq-tile" draggable="true" data-tile="X">X</div>
+            <div class="mq-tile" draggable="true" data-tile="Y">Y</div>
+            <div class="mq-tile" draggable="true" data-tile="Z">Z</div>
+            <div class="mq-tile" draggable="true" data-tile="H">H</div>
+            <div class="mq-tile" draggable="true" data-tile="S">S</div>
+            <div class="mq-tile" draggable="true" data-tile="T">T</div>
+            <div class="mq-tile is-cnot" draggable="true" data-tile="CNOT">CNOT</div>
+          </div>
+          <p class="drag-hint">Drag a gate onto a wire, or click a wire's slot to select it (it highlights), then click a gate tile to drop it in. Click a placed gate to remove it. For CNOT: drop it on whichever wire should be the control.</p>
+          <div class="mq-circuit-wrap">
+            <div id="mq-rows"></div>
+            <div class="mq-connectors" id="mq-connectors"></div>
+          </div>
+          <div class="mq-actions">
+            <button class="btn is-signal" id="mq-run">Run on simulator ▸</button>
+            <button class="btn" id="mq-clear">Clear circuit</button>
+          </div>
+          <div class="mq-steps" id="mq-steps"></div>
+
+          <div class="histogram-panel">
+            <div class="hist-col">
+              <div class="hist-bar-track"><div class="hist-bar" id="hist-bar-00"></div></div>
+              <div class="hist-label">00</div>
+              <div class="hist-val" id="hist-val-00">0</div>
+            </div>
+            <div class="hist-col">
+              <div class="hist-bar-track"><div class="hist-bar" id="hist-bar-01"></div></div>
+              <div class="hist-label">01</div>
+              <div class="hist-val" id="hist-val-01">0</div>
+            </div>
+            <div class="hist-col">
+              <div class="hist-bar-track"><div class="hist-bar" id="hist-bar-10"></div></div>
+              <div class="hist-label">10</div>
+              <div class="hist-val" id="hist-val-10">0</div>
+            </div>
+            <div class="hist-col">
+              <div class="hist-bar-track"><div class="hist-bar" id="hist-bar-11"></div></div>
+              <div class="hist-label">11</div>
+              <div class="hist-val" id="hist-val-11">0</div>
+            </div>
+          </div>
+        </div>
+        <figcaption>The step list shows the exact 4-amplitude state after every gate — including how CNOT changes the math differently from any single-qubit gate. "Run on simulator" samples 1024 simulated measurement shots from the exact probabilities, the same ideal-vs-sampled distinction real hardware dashboards show.</figcaption>
+      </figure>
+
+      <figure class="qc-figure code-cell" id="mq-code-cell">
+        <div class="figure-label"><span>Fig. 3.6 — the code behind your two-qubit circuit</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false"></textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>Each gate's matrix is expanded to the full 4×4 that acts on both qubits — for single-qubit gates this is a tensor product with identity on the other qubit (Ch. 5 covers exactly why that works); for CNOT it's the controlled structure shown in the card above.</figcaption>
+      </figure>
     </article>
 
     <div class="quiz-card" data-card-id="ch03-q1">
@@ -312,6 +389,7 @@ print("Probability of measuring 1:", abs(state[1])**2)</textarea>
 <script src="../js/main.js"></script>
 <script src="../js/bloch-sphere.js"></script>
 <script src="../js/circuit-builder.js"></script>
+<script src="../js/multi-qubit-circuit.js"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });

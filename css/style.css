@@ -477,3 +477,93 @@ table.qc-table td.mono { color: var(--signal); }
   color: var(--ink);
   line-height: 1.6;
 }
+
+/* ---------- Multi-qubit circuit (CNOT, IBM-composer-style) ---------- */
+.mq-palette { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.mq-tile {
+  min-width: 44px; height: 40px;
+  border: 1px solid var(--ink);
+  background: var(--paper-raised);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 13px;
+  cursor: grab;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius);
+  padding: 0 8px;
+}
+.mq-tile:active { cursor: grabbing; }
+.mq-tile.is-cnot { border-color: var(--signal); color: var(--signal); }
+
+.mq-circuit-wrap { position: relative; margin-bottom: 14px; }
+.qubit-row { display: flex; align-items: stretch; position: relative; }
+.qubit-row::before {
+  content: "";
+  position: absolute;
+  left: 30px; right: 30px;
+  top: 50%; height: 1px;
+  background: var(--ink-faint);
+  z-index: 0;
+}
+.qubit-label {
+  width: 30px; flex-shrink: 0;
+  display: flex; align-items: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-muted);
+  z-index: 1;
+}
+.q-cell {
+  width: 44px; height: 44px;
+  flex-shrink: 0;
+  margin-right: 5px;
+  border: 1px solid transparent;
+  background: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--ink-faint);
+  cursor: pointer;
+  z-index: 1;
+  border-radius: var(--radius);
+}
+.q-cell.is-filled { background: var(--paper-raised); border-color: var(--ink); color: var(--ink); }
+.q-cell.is-selected { border-color: var(--signal); box-shadow: 0 0 0 2px var(--signal-dim) inset; }
+.q-cell.is-over { border-color: var(--signal); background: var(--signal-dim); }
+.q-cell.is-cnot-ctrl { background: var(--paper-raised); border-color: var(--signal); color: var(--signal); font-size: 18px; }
+.q-cell.is-cnot-targ { background: var(--paper-raised); border-color: var(--signal); color: var(--signal); font-size: 16px; }
+.q-meter {
+  width: 36px; height: 44px;
+  flex-shrink: 0;
+  margin-left: 4px;
+  border: 1px solid var(--rule-strong);
+  background: var(--amber-bg);
+  color: var(--amber);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  z-index: 1;
+  border-radius: var(--radius);
+}
+.mq-connectors { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+.cnot-connector { position: absolute; top: 22px; width: 2px; height: 44px; background: var(--signal); z-index: 0; }
+
+.mq-actions { display: flex; gap: 10px; margin: 14px 0; }
+.mq-steps {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  white-space: pre-wrap;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  padding: 12px 14px;
+  color: var(--ink);
+  line-height: 1.6;
+  overflow-x: auto;
+}
+
+.histogram-panel { display: flex; align-items: flex-end; gap: 18px; height: 160px; padding: 10px 10px 0; margin-top: 16px; border-top: 1px solid var(--rule); }
+.hist-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+.hist-bar-track { width: 100%; max-width: 56px; height: 120px; display: flex; align-items: flex-end; background: var(--paper); border: 1px solid var(--rule); }
+.hist-bar { width: 100%; background: var(--signal); height: 0%; transition: height 0.6s cubic-bezier(0.2,0.8,0.2,1); }
+.hist-label { font-family: var(--font-mono); font-size: 12px; color: var(--ink); margin-top: 6px; }
+.hist-val { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); margin-top: 2px; }
