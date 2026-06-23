@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 2 — Inner & Outer Product · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <a class="toc-chapter is-live is-current" href="ch02-inner-outer-product.html">2. Inner & Outer Product</a>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <span class="toc-chapter is-locked">4. Unitary & Hermitian</span>
+      <span class="toc-chapter is-locked">5. Tensor / Kronecker Product</span>
+      <span class="toc-chapter is-locked">6. Commutation Relations</span>
+      <span class="toc-chapter is-locked">7. Postulates & Measurement</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <span class="toc-chapter is-locked">8–13. Density matrices → Kraus → damping</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <span class="toc-chapter is-locked">14–19. Teleportation → GHZ/W → Dicke</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <span class="toc-chapter is-locked">22–31. Parallelism → Shor</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part I · Chapter 2</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Inner & Outer Product</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~18 min</span>
+        <span><b>Prerequisites</b> Ch. 1</span>
+        <span><b>Tools</b> projection plane, live matrix, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <p class="lede">Take two vectors and combine them, and there are two completely different answers depending on which way you multiply them. One gives back a single number. The other gives back a whole matrix. Both show up constantly in quantum mechanics, under the names bra-ket notation gives them: the inner product and the outer product.</p>
+
+      <h2>The inner product</h2>
+      <p>Bra-ket notation splits a vector into two roles. The ket |ψ⟩ is the column vector you already know from Ch. 1. The bra ⟨ψ| is its conjugate transpose — flip it into a row, and replace every entry with its complex conjugate. The inner product ⟨ψ|φ⟩ multiplies a bra by a ket and produces a single number:</p>
+      <p style="text-align:center; font-size: 17px;">⟨ψ|φ⟩ = ψ₁*φ₁ + ψ₂*φ₂ + …</p>
+      <p>(the * marks complex conjugate). For real-valued vectors this is exactly the dot product you may already know, with a direct geometric meaning: a·b = |a||b|cos θ, where θ is the angle between them.</p>
+
+      <figure class="qc-figure">
+        <div class="figure-label"><span>Fig. 2.1 — drag either vector</span><span>a·b and its projection</span></div>
+        <div class="figure-body">
+          <div class="vec-plane-wrap"><svg id="inner-svg" width="280" height="280" viewBox="0 0 280 280"></svg></div>
+          <div class="vec-readout" id="inner-readout"></div>
+        </div>
+        <figcaption>The green segment is b projected onto a's direction — its signed length is exactly a·b / |a|. Drag b past 90° from a and watch the projection (and a·b) flip negative.</figcaption>
+      </figure>
+
+      <h3>Why complex conjugate?</h3>
+      <p>If you take the inner product of a vector with itself, ⟨ψ|ψ⟩, you get its squared length — and a length has to be a real, non-negative number. Without the conjugate, a complex vector's "length" could come out complex or negative, which is meaningless. The conjugate fixes this: ψᵢ*ψᵢ = |ψᵢ|² is always real and non-negative for every entry, every time.</p>
+
+      <h3>Norms and orthogonality</h3>
+      <p>The norm (length) of a vector is ‖ψ‖ = √⟨ψ|ψ⟩. A normalized vector has ‖ψ‖ = 1, meaning ⟨ψ|ψ⟩ = 1 — which is exactly the |α|² + |β|² = 1 constraint from Ch. 3, just written in bra-ket notation instead of spelled out.</p>
+      <p>Two vectors are <strong>orthogonal</strong> when ⟨ψ|φ⟩ = 0 — geometrically, perpendicular; cos θ = 0. |0⟩ and |1⟩ are orthogonal (⟨0|1⟩ = 0) and each already has norm 1, which makes them <strong>orthonormal</strong> — the technical term for "a basis where every vector has length 1 and every pair is perpendicular." It's the cleanest possible basis to work with, which is exactly why |0⟩/|1⟩ get used constantly.</p>
+
+      <h2>The outer product</h2>
+      <p>Multiply the same two vectors the other way around — ket times bra instead of bra times ket — and you get a matrix instead of a number:</p>
+      <div style="text-align:center; margin: 14px 0;">$$|\psi\rangle\langle\phi| = \begin{bmatrix}\psi_1\\\psi_2\end{bmatrix}\begin{bmatrix}\phi_1^*&\phi_2^*\end{bmatrix}=\begin{bmatrix}\psi_1\phi_1^*&\psi_1\phi_2^*\\\psi_2\phi_1^*&\psi_2\phi_2^*\end{bmatrix}$$</div>
+      <p>Every entry of the resulting matrix is just one entry from ψ times one (conjugated) entry from φ — no sum involved at all, unlike the inner product. Drag the same vectors in Fig. 2.1 above and watch this matrix update in real time (shown here for real-valued entries, so no conjugation is visible — Fig. 1.2 from Ch. 1 already showed you what a matrix like this actually does to a vector):</p>
+
+      <figure class="qc-figure">
+        <div class="figure-label"><span>Fig. 2.2 — same a, b as Fig. 2.1</span><span>ab^T</span></div>
+        <div class="figure-body">
+          <div class="outer-matrix-wrap" id="outer-matrix"></div>
+        </div>
+        <figcaption>Notice this matrix is built from outer products one rank-1 piece at a time — every entry is a single product, not a sum. That's the structural difference from the inner product: same two vectors, opposite arrangement, completely different kind of answer.</figcaption>
+      </figure>
+
+      <h3>Projectors</h3>
+      <p>The single most important outer product in this entire book is a vector with itself: |ψ⟩⟨ψ|. Applied to any vector v, it gives back ⟨ψ|v⟩·ψ — the part of v that points along ψ, scaled by how much of v actually lies in that direction. This is called a <strong>projector</strong>, and it's not just a mathematical curiosity: a projective measurement (Ch. 7) is defined as applying exactly this kind of operator. When you "measure in the |0⟩/|1⟩ basis," you're applying the projectors |0⟩⟨0| and |1⟩⟨1|, and the probability of each outcome is literally how much of your state's "length" that projector keeps.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 2.3 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+psi = np.array([1, 1j])   # a complex 2-vector, unnormalized
+phi = np.array([1, -1j])
+
+# Inner product: bra-ket <psi|phi>. np.vdot conjugates its FIRST argument automatically.
+inner = np.vdot(psi, phi)
+print("<psi|phi> =", inner)
+
+# Norm: sqrt of <psi|psi>
+norm = np.sqrt(np.vdot(psi, psi).real)
+print("||psi|| =", norm)
+
+# Outer product: |psi><phi|
+outer = np.outer(psi, np.conj(phi))
+print("|psi><phi| =\n", outer)
+
+# Orthogonality check between the standard basis vectors
+e0 = np.array([1, 0])
+e1 = np.array([0, 1])
+print("<e0|e1> =", np.vdot(e0, e1), " (should be 0 -- orthogonal)")</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>np.vdot conjugates its first argument for you — exactly the bra's job. np.dot does not conjugate, which is the right choice for real vectors but the wrong one for complex quantum states.</figcaption>
+      </figure>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: inner & outer products</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Video</span><a href="https://www.youtube.com/watch?v=LyGKycYT2v0" target="_blank" rel="noopener">3Blue1Brown — Dot products and duality</a><span class="res-note">The geometric intuition behind projection that Fig. 2.1 is built to demonstrate.</span></li>
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §2.1.4–2.1.6</a><span class="res-note">Inner products, norms, and the projector formalism used throughout the rest of the book.</span></li>
+          <li><span class="res-type">Tool</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.vdot.html" target="_blank" rel="noopener">NumPy docs — vdot / outer</a><span class="res-note">Reference for the exact functions used in Fig. 2.3's code cell.</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch02-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What is ⟨a|b⟩ for a = (2, 0) and b = (1, 1)?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>2 — for real vectors, ⟨a|b⟩ is just the dot product: 2·1 + 0·1 = 2.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch02-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Why does the inner product need a complex conjugate, when an ordinary dot product doesn't?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>So that ⟨ψ|ψ⟩ — a vector's squared length — always comes out real and non-negative, even when the vector's entries are complex numbers. Without conjugating, ψᵢ·ψᵢ could be a negative or complex number, which can't be a length.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch02-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What does it mean for two vectors to be "orthonormal," and why are |0⟩ and |1⟩ a good example?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Orthonormal means every vector has norm 1 and every pair is orthogonal (inner product 0). |0⟩ and |1⟩ each have ⟨ψ|ψ⟩ = 1, and ⟨0|1⟩ = 0, so they satisfy both conditions — the cleanest possible basis to compute with.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch02-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">For ψ = (2, 0) and φ = (0, 3), what is |ψ⟩⟨φ| (the outer product, as a 2×2 matrix)?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>[[0, 6], [0, 0]] — entry (i,j) is ψᵢ times φⱼ (conjugated, but these are real so it doesn't matter here): (2)(0)=0, (2)(3)=6, (0)(0)=0, (0)(3)=0.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch02-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What does the projector |0⟩⟨0| do when applied to the state |+⟩ = (|0⟩+|1⟩)/√2?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>It keeps only the |0⟩ component: |0⟩⟨0|+⟩ = ⟨0|+⟩·|0⟩ = (1/√2)|0⟩. This is exactly the operation behind measuring |+⟩ in the |0⟩/|1⟩ basis — the squared length of the result, 1/2, is the probability of measuring 0.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch02-q6">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">In one sentence: what's the structural difference between how the inner product and the outer product combine two vectors?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>The inner product sums products of corresponding entries into a single number; the outer product produces every pairwise product separately, arranged as a matrix, with no summing at all.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/ch02-products.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>

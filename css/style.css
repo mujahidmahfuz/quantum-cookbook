@@ -608,3 +608,6 @@ table.qc-table td.mono { color: var(--signal); }
 }
 .matrix-preset:hover { background: var(--ink); color: var(--paper); }
 .transform-eq { margin-top: 12px; font-size: 15px; }
+
+/* ---------- Ch.2 inner/outer product widgets ---------- */
+.outer-matrix-wrap { display: flex; justify-content: center; margin-top: 16px; font-size: 16px; }
