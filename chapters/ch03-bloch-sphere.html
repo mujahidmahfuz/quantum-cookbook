@@ -92,14 +92,59 @@
           <div class="bloch-2d-wrap">
             <svg id="bloch-2d" width="180" height="180" viewBox="0 0 180 180"></svg>
           </div>
+          <p class="drag-hint">Click and drag directly on the sphere to rotate the vector, or use the sliders for precise angles.</p>
+          <div class="gate-row">
+            <button class="gate-btn" data-gate="I">I</button>
+            <button class="gate-btn" data-gate="X">X</button>
+            <button class="gate-btn" data-gate="Y">Y</button>
+            <button class="gate-btn" data-gate="Z">Z</button>
+            <button class="gate-btn" data-gate="H">H</button>
+            <button class="gate-btn" data-gate="S">S</button>
+            <button class="gate-btn" data-gate="T">T</button>
+            <button class="btn" id="bloch-reset">Reset to |0⟩</button>
+          </div>
         </div>
-        <figcaption>The Bloch sphere (left) and the great-circle slice at the current φ (below) — the 2D cross-section that makes the θ angle easy to read at a glance. Every point on the surface is a valid single-qubit state.</figcaption>
+        <figcaption>The Bloch sphere (left) and the great-circle slice at the current φ (below) — the 2D cross-section that makes the θ angle easy to read at a glance. Click a gate button to watch it act as a real rotation of the vector.</figcaption>
       </figure>
 
       <p>Every point on the sphere's surface is a valid single-qubit state. The north pole is <span class="mono">|0⟩</span>, the south pole is <span class="mono">|1⟩</span>, and everywhere else is a superposition with a specific phase and amplitude balance — not "0 and 1 at once" in any vague sense, but one specific point on a specific sphere.</p>
 
+      <h3>What superposition actually means</h3>
+      <p>Written out fully, a qubit's state is</p>
+      <p style="text-align:center; font-size: 18px;">|ψ⟩ = c₀|0⟩ + c₁|1⟩</p>
+      <p>where c₀ and c₁ are <em>complex numbers</em> called probability amplitudes — not probabilities themselves. The actual probability of measuring 0 is |c₀|², and of measuring 1 is |c₁|². Because some outcome must happen, these have to sum to exactly 1:</p>
+      <p style="text-align:center; font-size: 18px;">|c₀|² + |c₁|² = 1</p>
+      <p>That single constraint is why a qubit's state space is a <em>sphere</em> at all — it's the same reason the set of points (x, y, z) with x² + y² + z² = 1 traces out a sphere. The θ/φ parametrization in Fig. 3.1 is just a convenient way to walk along that constraint surface without ever leaving it: change θ or φ all you like, and |c₀|² + |c₁|² = 1 stays true automatically. The readout under the sphere confirms this directly — try dragging to an extreme angle and check that the line still sums to 1.</p>
+
+      <h3>A few named states</h3>
+      <p>Most of what you'll read elsewhere refers back to these six points by name:</p>
+      <table class="qc-table">
+        <thead><tr><th>State</th><th>θ</th><th>φ</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">|0⟩</td><td>0°</td><td>—</td><td>North pole, the "classical 0"</td></tr>
+          <tr><td class="mono">|1⟩</td><td>180°</td><td>—</td><td>South pole, the "classical 1"</td></tr>
+          <tr><td class="mono">|+⟩</td><td>90°</td><td>0°</td><td>Equal superposition, no relative phase</td></tr>
+          <tr><td class="mono">|−⟩</td><td>90°</td><td>180°</td><td>Equal superposition, opposite relative phase</td></tr>
+          <tr><td class="mono">|+i⟩</td><td>90°</td><td>90°</td><td>Equal superposition, phase rotated a quarter-turn</td></tr>
+          <tr><td class="mono">|−i⟩</td><td>90°</td><td>270°</td><td>Equal superposition, phase rotated three-quarter-turn</td></tr>
+        </tbody>
+      </table>
+      <p>Try dragging Fig. 3.1's vector to each of these six points and reading the live equation above the sphere — it's the fastest way to make the table above stop feeling like a list of symbols.</p>
+
       <h3>Global phase doesn't move the point</h3>
       <p>Multiply the whole state by <span class="mono">e^{iα}</span> for any real α, and the Bloch vector doesn't move at all — global phase is invisible to the sphere, and (as you'll confirm in Ch. 7) invisible to any measurement too. Only the <em>relative</em> phase between the |0⟩ and |1⟩ components — the φ slider above — actually changes where the point sits.</p>
+
+      <h3>Gates are rotations of this exact sphere</h3>
+      <p>A single-qubit gate is a 2×2 matrix that takes one valid state to another valid state — geometrically, that means every gate has to be a rotation (or a reflection that's really a rotation about some axis) of the Bloch sphere, since that's the only kind of map that keeps every point on the surface. Click the buttons in Fig. 3.1 and watch what each one actually does:</p>
+      <ul>
+        <li><span class="mono">X</span> — 180° flip that swaps |0⟩ and |1⟩ (north pole ↔ south pole)</li>
+        <li><span class="mono">Y</span> — 180° flip about a different axis, same poles-swap, different effect on phase</li>
+        <li><span class="mono">Z</span> — leaves |0⟩ and |1⟩ fixed, but flips the phase of everything in between (watch |+⟩ go to |−⟩)</li>
+        <li><span class="mono">H</span> (Hadamard) — takes |0⟩ straight to the equator; takes the equator's |+⟩ back to |0⟩</li>
+        <li><span class="mono">S</span> — a 90° rotation around the vertical axis (only moves points off the poles)</li>
+        <li><span class="mono">T</span> — a gentler 45° version of the same rotation as S</li>
+      </ul>
+      <p>None of this is metaphorical — every button click above is a real 2×2 complex matrix multiplying the current (c₀, c₁), with the result re-plotted on the sphere. The code cell below shows the same Hadamard operation as raw matrix arithmetic, so you can see both views of the identical fact.</p>
 
       <div class="resource-panel">
         <button class="resource-toggle"><span class="chev">▸</span> Further reading: the Bloch sphere</button>
@@ -110,8 +155,8 @@
         </ul>
       </div>
 
-      <h2>Your first gate: the Hadamard</h2>
-      <p>The Hadamard gate <span class="mono">H</span> takes <span class="mono">|0⟩</span> straight to the equator — the state with equal weight on both outcomes. Run it below and check the amplitudes against what the sliders show for θ = 90°, φ = 0°.</p>
+      <h2>The Hadamard gate, as matrix arithmetic</h2>
+      <p>You just clicked <span class="mono">H</span> above and watched the vector move. Here's the exact same operation as the raw linear algebra underneath it — edit the matrix and re-run to try a different gate as code instead of a button.</p>
 
       <figure class="qc-figure code-cell">
         <div class="figure-label"><span>Fig. 3.2 — code, runs in your browser</span><span class="code-status"></span></div>

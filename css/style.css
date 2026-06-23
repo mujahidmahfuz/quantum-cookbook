@@ -350,3 +350,51 @@ footer.site-footer {
   font-size: 11.5px;
   color: var(--ink-faint);
 }
+
+
+/* ---------- Gate buttons (added per feedback: real interactive gates) ---------- */
+.gate-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.gate-btn {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  width: 42px;
+  height: 36px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  border-radius: var(--radius);
+}
+.gate-btn:hover { background: var(--ink); color: var(--paper); }
+.drag-hint {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  margin-top: 8px;
+}
+
+table.qc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0;
+  font-size: 14.5px;
+}
+table.qc-table th, table.qc-table td {
+  border-bottom: 1px solid var(--rule);
+  padding: 8px 10px;
+  text-align: left;
+}
+table.qc-table th {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  letter-spacing: 0.04em;
+}
+table.qc-table td.mono { color: var(--signal); }
