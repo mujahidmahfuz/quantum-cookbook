@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 4 — Unitary & Hermitian Operators · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <a class="toc-chapter is-live" href="ch02-inner-outer-product.html">2. Inner & Outer Product</a>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <a class="toc-chapter is-live is-current" href="ch04-unitary-hermitian.html">4. Unitary & Hermitian</a>
+      <span class="toc-chapter is-locked">5. Tensor / Kronecker Product</span>
+      <span class="toc-chapter is-locked">6. Commutation Relations</span>
+      <span class="toc-chapter is-locked">7. Postulates & Measurement</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <span class="toc-chapter is-locked">8–13. Density matrices → Kraus → damping</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <span class="toc-chapter is-locked">14–19. Teleportation → GHZ/W → Dicke</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <span class="toc-chapter is-locked">22–31. Parallelism → Shor</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part I · Chapter 4</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Unitary & Hermitian Operators</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~20 min</span>
+        <span><b>Prerequisites</b> Ch. 1–3</span>
+        <span><b>Tools</b> live matrix property checker</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <p class="lede">Three earlier chapters have all been quietly pointing at this one. Ch. 1 told you a gate matrix has to satisfy "one extra rule" beyond being any old 2×2 matrix. Ch. 2 gave you the dagger (†) notation for a vector's conjugate transpose. Ch. 4 generalizes † to matrices and uses it to state, precisely, the two rules that separate "a matrix that could be a real quantum gate" from "a matrix that's just numbers in a grid," and the rule that separates "something you could actually measure" from "something you can't."</p>
+
+      <h2>The conjugate transpose of a matrix</h2>
+      <p>You already met this for vectors in Ch. 2: the bra ⟨ψ| is the ket |ψ⟩ transposed into a row, with every entry conjugated. The exact same operation on a matrix is written M† ("M dagger"): transpose it, then conjugate every entry.</p>
+      <div style="text-align:center; margin: 14px 0;">$$M=\begin{bmatrix}a&b\\c&d\end{bmatrix} \quad\Rightarrow\quad M^\dagger=\begin{bmatrix}a^*&c^*\\b^*&d^*\end{bmatrix}$$</div>
+
+      <h2>Unitary: the rule every quantum gate obeys</h2>
+      <p>A matrix U is <strong>unitary</strong> if U†U = I. Here's why that specific condition is the right one: Ch. 3 required every valid qubit state to satisfy ⟨ψ|ψ⟩ = 1, and a gate has to take valid states to valid states. If U preserves every state's norm — ⟨Uψ|Uψ⟩ = ⟨ψ|ψ⟩ for every ψ — then writing that out as ψ†U†Uψ = ψ†ψ forces U†U = I directly. Unitarity isn't an arbitrary rule bolted onto quantum mechanics; it's just "doesn't break normalization," translated into one matrix equation.</p>
+      <p>This is exactly the "extra rule" Ch. 1 mentioned: the Shear preset in Fig. 1.2 fails it (Shear†·Shear ≠ I), which is precisely why no real quantum gate looks like a shear.</p>
+
+      <h2>Hermitian: the rule every observable obeys</h2>
+      <p>A matrix M is <strong>Hermitian</strong> if it equals its own dagger: M = M†. Concretely, that forces the diagonal entries to be real (a number that equals its own conjugate has to be real) and the two off-diagonal entries to be complex conjugates of each other.</p>
+      <p>Hermitian matrices have one property that makes them indispensable in quantum mechanics, and it's the reason this chapter exists right after Ch. 1's eigenvalue section: <strong>every eigenvalue of a Hermitian matrix is guaranteed to be a real number.</strong> Since a measurement outcome (Ch. 7) is defined as an eigenvalue of the observable being measured, and a measured quantity has to be a real number, observables are required to be represented by Hermitian matrices — there's no other option that would even make sense.</p>
+
+      <figure class="qc-figure" id="op-widget">
+        <div class="figure-label"><span>Fig. 4.1 — edit any entry, or pick a preset</span><span>checks unitarity, Hermiticity, eigenvalues</span></div>
+        <div class="figure-body">
+          <div class="complex-grid">
+            <div class="complex-cell"><input id="m00re" type="number" step="0.5" value="1" /><span>+</span><input id="m00im" type="number" step="0.5" value="0" /><span>i</span></div>
+            <div class="complex-cell"><input id="m01re" type="number" step="0.5" value="0" /><span>+</span><input id="m01im" type="number" step="0.5" value="0" /><span>i</span></div>
+            <div class="complex-cell"><input id="m10re" type="number" step="0.5" value="0" /><span>+</span><input id="m10im" type="number" step="0.5" value="0" /><span>i</span></div>
+            <div class="complex-cell"><input id="m11re" type="number" step="0.5" value="1" /><span>+</span><input id="m11im" type="number" step="0.5" value="0" /><span>i</span></div>
+          </div>
+          <div class="preset-row">
+            <button class="op-preset matrix-preset" data-matrix='[[{"re":1,"im":0},{"re":0,"im":0}],[{"re":0,"im":0},{"re":1,"im":0}]]'>I</button>
+            <button class="op-preset matrix-preset" data-matrix='[[{"re":0,"im":0},{"re":1,"im":0}],[{"re":1,"im":0},{"re":0,"im":0}]]'>X</button>
+            <button class="op-preset matrix-preset" data-matrix='[[{"re":0,"im":0},{"re":0,"im":-1}],[{"re":0,"im":1},{"re":0,"im":0}]]'>Y</button>
+            <button class="op-preset matrix-preset" data-matrix='[[{"re":1,"im":0},{"re":0,"im":0}],[{"re":0,"im":0},{"re":-1,"im":0}]]'>Z</button>
+            <button class="op-preset matrix-preset" data-matrix='[[{"re":0.7071,"im":0},{"re":0.7071,"im":0}],[{"re":0.7071,"im":0},{"re":-0.7071,"im":0}]]'>H</button>
+            <button class="op-preset matrix-preset" data-matrix='[[{"re":1,"im":0},{"re":0,"im":0}],[{"re":0,"im":0},{"re":0,"im":1}]]'>S (unitary, not Hermitian)</button>
+            <button class="op-preset matrix-preset" data-matrix='[[{"re":1,"im":0},{"re":0,"im":0}],[{"re":0,"im":0},{"re":2,"im":0}]]'>Hermitian, not unitary</button>
+            <button class="op-preset matrix-preset" data-matrix='[[{"re":1,"im":0},{"re":1,"im":0}],[{"re":0,"im":0},{"re":1,"im":0}]]'>Neither (Shear)</button>
+          </div>
+          <div class="op-status-row">
+            <span class="op-status" id="op-unitary-tag">Unitary: —</span>
+            <span class="op-status" id="op-hermitian-tag">Hermitian: —</span>
+          </div>
+          <div class="op-output-grid">
+            <div><h4>M†</h4><div id="op-dagger"></div></div>
+            <div><h4>M†M (check against I)</h4><div id="op-product"></div></div>
+          </div>
+          <div class="eigen-readout-box" id="op-eigen"></div>
+        </div>
+        <figcaption>Try "S": unitary (S†S = I) but not Hermitian, and its eigenvalues are 1 and i — one real, one genuinely complex, which is exactly why S can be a gate but could never represent a measurable quantity. Then try "Hermitian, not unitary": passes the Hermitian check and gives two real eigenvalues, but fails M†M = I outright.</figcaption>
+      </figure>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 4.2 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+S = np.array([[1, 0],
+              [0, 1j]])
+
+S_dagger = S.conj().T
+print("S dagger:\n", S_dagger)
+
+is_unitary = np.allclose(S_dagger @ S, np.eye(2))
+is_hermitian = np.allclose(S, S_dagger)
+print("Unitary:", is_unitary, "  Hermitian:", is_hermitian)
+
+eigenvalues = np.linalg.eigvals(S)
+print("Eigenvalues:", eigenvalues)</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>np.linalg.eigvals does in one call exactly what Fig. 4.1's widget does under the hood with the explicit quadratic formula.</figcaption>
+      </figure>
+
+      <h3>Both at once: Pauli matrices</h3>
+      <p>Try I, X, Y, and Z in Fig. 4.1 — every one of them is <em>both</em> unitary and Hermitian simultaneously, with real eigenvalues of exactly +1 and −1. That's not a coincidence: it's exactly why the Pauli matrices do double duty throughout this book, as gates (Ch. 3, where unitary is the requirement) and as observables (Ch. 7, where Hermitian is the requirement). Most matrices are one, the other, neither, or — like the Pauli matrices — happily both.</p>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: unitary & Hermitian operators</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Video</span><a href="https://www.youtube.com/watch?v=4ESMpntfb-A" target="_blank" rel="noopener">3Blue1Brown — Eigenvectors and eigenvalues</a><span class="res-note">Useful refresher before the spectral-theorem claim in this chapter (Hermitian ⇒ real eigenvalues).</span></li>
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §2.1.7–2.1.9</a><span class="res-note">The full spectral theorem and proof that Hermitian operators have real eigenvalues and orthogonal eigenvectors.</span></li>
+          <li><span class="res-type">Tool</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.linalg.eigvals.html" target="_blank" rel="noopener">NumPy docs — linalg.eigvals</a><span class="res-note">Reference for the function used in Fig. 4.2's code cell.</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch04-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What two conditions does M = [[a,b],[c,d]] have to satisfy to be Hermitian?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>a and d (the diagonal entries) must be real, and c must equal b* (the complex conjugate of b) — equivalently, b must equal c*.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch04-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Why is unitarity exactly the right condition for a quantum gate, rather than some other rule?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Because a gate must take every normalized state to another normalized state. Requiring ⟨Uψ|Uψ⟩ = ⟨ψ|ψ⟩ for all ψ is algebraically identical to requiring U†U = I — unitarity is just "preserves normalization" written as a matrix equation.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch04-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">The S gate is unitary but not Hermitian. Could S represent a measurable physical quantity?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>No. Observables must be Hermitian because measurement outcomes are eigenvalues, and outcomes have to be real numbers. S has eigenvalues 1 and i — since i isn't real, S can't represent anything you could actually measure, even though it's a perfectly valid gate.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch04-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">[[1,0],[0,2]] is Hermitian but not unitary. What does failing the unitary check tell you it could never be?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>A quantum gate. Applying it to a normalized state wouldn't generally give back a normalized state (its eigenvalues 1 and 2 aren't both magnitude 1), so it can't be a valid unitary operation — even though it's a perfectly good Hermitian observable.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch04-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Why are the Pauli matrices (I, X, Y, Z) special among the gates you've seen so far?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>They're both unitary and Hermitian simultaneously, with real eigenvalues ±1 — which is exactly why they serve double duty in the book, as gates in Ch. 3 and as observables in Ch. 7.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/ch04-operators.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>

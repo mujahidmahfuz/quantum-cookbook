@@ -611,3 +611,23 @@ table.qc-table td.mono { color: var(--signal); }
 
 /* ---------- Ch.2 inner/outer product widgets ---------- */
 .outer-matrix-wrap { display: flex; justify-content: center; margin-top: 16px; font-size: 16px; }
+
+/* ---------- Ch.4 matrix property checker ---------- */
+.complex-grid { display: grid; grid-template-columns: repeat(2, auto); gap: 10px; margin-bottom: 16px; }
+.complex-cell {
+  display: flex; align-items: center; gap: 3px;
+  border: 1px solid var(--rule); background: var(--paper-raised);
+  padding: 6px 8px; font-family: var(--font-mono); font-size: 13px;
+}
+.complex-cell input { width: 44px; text-align: center; font-family: var(--font-mono); font-size: 13px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); padding: 4px 2px; }
+.complex-cell span { color: var(--ink-faint); }
+.op-status-row { display: flex; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
+.op-status {
+  font-family: var(--font-mono); font-size: 13px; padding: 6px 12px; border-radius: var(--radius);
+  border: 1px solid var(--rule);
+}
+.op-status.is-yes { background: var(--green-bg); color: var(--green); border-color: var(--green); }
+.op-status.is-no { background: var(--amber-bg); color: var(--amber); border-color: var(--amber); }
+.op-output-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 12px; }
+.op-output-grid h4 { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 6px; }
+.eigen-readout-box { font-family: var(--font-mono); font-size: 13px; color: var(--signal); margin-top: 10px; }
