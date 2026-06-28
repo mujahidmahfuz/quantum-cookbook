@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 7 — Postulates & Measurement · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <a class="toc-chapter is-live" href="ch02-inner-outer-product.html">2. Inner & Outer Product</a>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <a class="toc-chapter is-live" href="ch04-unitary-hermitian.html">4. Unitary & Hermitian</a>
+      <a class="toc-chapter is-live" href="ch05-tensor-kronecker-product.html">5. Tensor / Kronecker Product</a>
+      <a class="toc-chapter is-live" href="ch06-commutation-relations.html">6. Commutation Relations</a>
+      <a class="toc-chapter is-live is-current" href="ch07-postulates-measurement.html">7. Postulates & Measurement</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <span class="toc-chapter is-locked">8–13. Density matrices → Kraus → damping</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <span class="toc-chapter is-locked">14–19. Teleportation → GHZ/W → Dicke</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <span class="toc-chapter is-locked">22–31. Parallelism → Shor</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part I · Chapter 7 · Final chapter of Part I</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Postulates & Measurement</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~22 min</span>
+        <span><b>Prerequisites</b> Ch. 1–6</span>
+        <span><b>Tools</b> repeated-measurement histogram, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <p class="lede">Nothing in this chapter is new. Every piece has already been built, one chapter at a time: vectors and norms (Ch. 1–2), unitary evolution (Ch. 4), tensor products (Ch. 5), projectors (Ch. 2) and eigenvalues (Ch. 1) feeding into Hermitian observables (Ch. 4 and Ch. 6). This chapter's only job is to state, plainly, the four rules that say how those pieces actually govern a physical system — the postulates of quantum mechanics.</p>
+
+      <h2>Postulate 1 — State</h2>
+      <p>The state of an isolated physical system is a unit vector |ψ⟩ in a complex vector space. "Unit" means ⟨ψ|ψ⟩ = 1 (Ch. 2) — exactly the |α|²+|β|²=1 constraint you first met in Ch. 3, now stated as the general rule it always was.</p>
+
+      <h2>Postulate 2 — Evolution</h2>
+      <p>A closed system's state evolves over time according to |ψ′⟩ = U|ψ⟩ for some unitary U (Ch. 4). Every gate in Ch. 3 and every circuit in the Composer was already an example of this postulate in action — you were applying it before you had a name for it.</p>
+
+      <h2>Postulate 3 — Measurement (the Born rule)</h2>
+      <p>An observable is represented by a Hermitian operator M (Ch. 4). Measuring it can only ever produce one of M's eigenvalues (Ch. 1) — that's the actual mechanism behind "measurement outcomes are real numbers," since Hermitian operators guarantee real eigenvalues. If |φᵢ⟩ is the eigenvector for eigenvalue λᵢ, the probability of getting that outcome is:</p>
+      <p style="text-align:center; font-size: 18px;">P(λᵢ) = |⟨φᵢ|ψ⟩|²</p>
+      <p>— the squared magnitude of an inner product, exactly the projector machinery from Ch. 2. After the measurement, the state collapses to |φᵢ⟩: the outcome you got is now, with certainty, what the system is in.</p>
+
+      <h2>Postulate 4 — Composite systems</h2>
+      <p>The state space of several systems together is the tensor product of their individual state spaces (Ch. 5). This is the entire reason a 2-qubit system needs 4 amplitudes rather than 4 — it's where every two-qubit state in the Composer and Ch. 3's circuit widgets actually came from.</p>
+
+      <h3>Watching the Born rule converge</h3>
+      <p>P(λᵢ) = |⟨φᵢ|ψ⟩|² is a single-shot probability — it tells you the odds for <em>one</em> measurement. It doesn't say what one measurement will give you (that's genuinely random), but it makes a sharp prediction about what happens over <em>many</em> measurements: the fraction of each outcome should converge to that exact probability as the count grows. That convergence is something you can actually watch happen.</p>
+
+      <figure class="qc-figure" id="meas-widget">
+        <div class="figure-label"><span>Fig. 7.1 — set a state, pick a basis, run shots</span><span>watch convergence</span></div>
+        <div class="figure-body">
+          <div id="meas-ket" style="margin-bottom: 14px; font-size: 16px;"></div>
+          <div class="meas-controls">
+            <div style="flex:1; min-width:220px;">
+              <div class="slider-row">
+                <label><span>θ (polar angle)</span><span id="theta-val-m">90°</span></label>
+                <input type="range" id="theta-slider-m" min="0" max="3.14159" step="0.01" value="1.5708" />
+              </div>
+              <div class="slider-row">
+                <label><span>φ (azimuthal angle)</span><span id="phi-val-m">0°</span></label>
+                <input type="range" id="phi-slider-m" min="0" max="6.28318" step="0.01" value="0" />
+              </div>
+            </div>
+          </div>
+          <div class="meas-basis-row">
+            <span style="font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-faint); align-self:center;">Measure in:</span>
+            <button class="meas-basis-btn is-active" data-basis="Z">Z basis (|0⟩, |1⟩)</button>
+            <button class="meas-basis-btn" data-basis="X">X basis (|+⟩, |−⟩)</button>
+          </div>
+          <div class="circuit-actions" style="display:flex; gap:10px;">
+            <button class="btn is-signal" id="meas-run">Run 100 shots ▸</button>
+            <button class="btn" id="meas-reset">Reset shots</button>
+          </div>
+          <div class="meas-hist-panel">
+            <div class="meas-hist-col">
+              <div class="meas-hist-track"><div class="meas-hist-bar" id="meas-bar-0"></div><div class="meas-hist-theory-line" id="meas-theory-0"></div></div>
+              <div class="meas-hist-label" id="meas-label-0">|0⟩</div>
+              <div class="meas-hist-val" id="meas-val-0"></div>
+            </div>
+            <div class="meas-hist-col">
+              <div class="meas-hist-track"><div class="meas-hist-bar" id="meas-bar-1"></div><div class="meas-hist-theory-line" id="meas-theory-1"></div></div>
+              <div class="meas-hist-label" id="meas-label-1">|1⟩</div>
+              <div class="meas-hist-val" id="meas-val-1"></div>
+            </div>
+          </div>
+          <div class="meas-readout" id="meas-readout"></div>
+        </div>
+        <figcaption>The blue bar is the empirical fraction so far; the amber line is the exact Born-rule probability |⟨φᵢ|ψ⟩|², computed live as a real inner product — the same calculation Ch. 2's projector section walked through by hand. Switching basis with shots already run resets the count, since you're now measuring a genuinely different observable.</figcaption>
+      </figure>
+
+      <h3>Why collapse matters for what you can know next</h3>
+      <p>The collapse part of Postulate 3 is easy to skim past, but it's the reason measurement order matters at all. Set θ = 90°, φ = 0° (state |+⟩) and run some shots in the Z basis — you'll see roughly 50/50, as expected. But once a single measurement actually happens and collapses the state to, say, |0⟩, a second Z-basis measurement immediately after will give |0⟩ again with certainty — the randomness was only ever about the <em>first</em> measurement of a given observable on a given state, not a property of the universe re-rolling dice forever.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 7.2 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+def born_prob(basis_vector, psi):
+    # P = |<basis_vector|psi>|^2 -- the inner product machinery from Ch. 2
+    amplitude = np.vdot(basis_vector, psi)
+    return abs(amplitude) ** 2
+
+# |+> state
+psi = np.array([1, 1], dtype=complex) / np.sqrt(2)
+
+zero = np.array([1, 0])
+one = np.array([0, 1])
+print("Z basis: P(0) =", born_prob(zero, psi), " P(1) =", born_prob(one, psi))
+
+plus = np.array([1, 1]) / np.sqrt(2)
+minus = np.array([1, -1]) / np.sqrt(2)
+print("X basis: P(+) =", born_prob(plus, psi), " P(-) =", born_prob(minus, psi))
+
+# Simulate 1000 shots in the Z basis and check convergence
+shots = np.random.choice([0, 1], size=1000, p=[born_prob(zero, psi), born_prob(one, psi)])
+print("Empirical P(0) over 1000 shots:", np.mean(shots == 0))</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>Run this a few times — the empirical P(0) jitters around 0.5 but never strays far, the same convergence Fig. 7.1 shows visually.</figcaption>
+      </figure>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: postulates & measurement</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §2.2</a><span class="res-note">The formal statement of all four postulates this chapter assembles from earlier ones.</span></li>
+          <li><span class="res-type">Article</span><a href="https://en.wikipedia.org/wiki/Born_rule" target="_blank" rel="noopener">Wikipedia — Born rule</a><span class="res-note">History and generalizations of the probability rule in Fig. 7.1.</span></li>
+          <li><span class="res-type">Tool</span><a href="https://numpy.org/doc/stable/reference/random/generated/numpy.random.choice.html" target="_blank" rel="noopener">NumPy docs — random.choice</a><span class="res-note">Reference for the shot-sampling used in Fig. 7.2.</span></li>
+        </ul>
+      </div>
+
+      <h2 style="margin-top: 3em;">End of Part I</h2>
+      <p>Everything from here on — density matrices, entanglement, error correction, algorithms — is built entirely out of these four postulates and the linear algebra underneath them. There's no new foundational machinery coming; just new things to build with what you already have.</p>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch07-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">State the four postulates in one phrase each.</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>State: a unit vector. Evolution: unitary transformation. Measurement: Hermitian operator, outcome is an eigenvalue with probability |⟨eigenvector|ψ⟩|², then collapse. Composite systems: tensor product of individual spaces.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch07-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Why must a measurement outcome's probability use the inner product, rather than just reading off an amplitude directly?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Because the relevant probability is for a specific basis vector, found via the projection of ψ onto that basis — exactly what an inner product computes. P(λᵢ) = |⟨φᵢ|ψ⟩|² is literally "how much of ψ points along φᵢ," squared.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch07-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">For |+⟩, what's P(0) in the Z basis, and what's P(+) in the X basis?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>P(0) = 0.5 in the Z basis (|+⟩ is an equal superposition of |0⟩ and |1⟩), but P(+) = 1.0 in the X basis, since |+⟩ <em>is</em> one of the X-basis vectors — measuring an observable in its own eigenbasis always gives a certain outcome.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch07-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">After a measurement collapses |ψ⟩ to |0⟩, what happens if you immediately measure the same observable again?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>You get |0⟩ again, with certainty (probability 1). The randomness is only in the first measurement of a given state — collapse means the state genuinely is |0⟩ afterward, not just "probably."</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch07-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Which earlier chapter's idea does each postulate depend on: (a) Evolution, (b) Composite systems?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>(a) Ch. 4 — unitary operators. (b) Ch. 5 — the tensor product.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch07-q6">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Why does the Born rule specifically require the observable to be Hermitian?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Because the outcome must be one of the observable's eigenvalues, and that eigenvalue has to be a real number for the outcome to mean anything physically. Hermitian operators are exactly the ones guaranteed to have real eigenvalues (Ch. 4).</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/ch07-measurement.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>

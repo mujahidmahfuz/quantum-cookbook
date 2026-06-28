@@ -654,3 +654,20 @@ table.qc-table td.mono { color: var(--signal); }
 .commutator-output-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 14px; }
 .commutator-output-grid h4 { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 6px; }
 .commute-tag-row { margin: 14px 0; }
+
+/* ---------- Ch.7 measurement widget ---------- */
+.meas-controls { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; }
+.meas-basis-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.meas-basis-btn {
+  font-family: var(--font-mono); font-size: 12.5px; border: 1px solid var(--ink); background: var(--paper);
+  color: var(--ink); padding: 7px 14px; cursor: pointer; border-radius: var(--radius);
+}
+.meas-basis-btn.is-active { background: var(--ink); color: var(--paper); }
+.meas-hist-panel { display: flex; align-items: flex-end; gap: 30px; height: 170px; padding: 10px 16px 0; border-top: 1px solid var(--rule); margin-top: 10px; }
+.meas-hist-col { flex: 1; max-width: 110px; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; position: relative; }
+.meas-hist-track { width: 60px; height: 130px; display: flex; align-items: flex-end; background: var(--paper); border: 1px solid var(--rule); position: relative; }
+.meas-hist-bar { width: 100%; background: var(--signal); height: 0%; transition: height 0.4s ease; }
+.meas-hist-theory-line { position: absolute; left: 0; right: 0; height: 2px; background: var(--amber); }
+.meas-hist-label { font-family: var(--font-mono); font-size: 13px; color: var(--ink); margin-top: 8px; }
+.meas-hist-val { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); margin-top: 2px; }
+.meas-readout { font-family: var(--font-mono); font-size: 13px; color: var(--signal); background: var(--paper); border: 1px solid var(--rule); padding: 10px 14px; margin-top: 10px; }
