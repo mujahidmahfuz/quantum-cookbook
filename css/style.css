@@ -649,3 +649,8 @@ table.qc-table td.mono { color: var(--signal); }
 .tensor-block-grid .tb-cell.q-01 { background: #fdeee0; }
 .tensor-block-grid .tb-cell.q-10 { background: #e3f5ee; }
 .tensor-block-grid .tb-cell.q-11 { background: #f3e9f7; }
+
+/* ---------- Ch.6 commutator widget ---------- */
+.commutator-output-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 14px; }
+.commutator-output-grid h4 { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 6px; }
+.commute-tag-row { margin: 14px 0; }

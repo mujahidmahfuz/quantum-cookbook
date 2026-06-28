@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 6 — Commutation Relations · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <a class="toc-chapter is-live" href="ch02-inner-outer-product.html">2. Inner & Outer Product</a>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <a class="toc-chapter is-live" href="ch04-unitary-hermitian.html">4. Unitary & Hermitian</a>
+      <a class="toc-chapter is-live" href="ch05-tensor-kronecker-product.html">5. Tensor / Kronecker Product</a>
+      <a class="toc-chapter is-live is-current" href="ch06-commutation-relations.html">6. Commutation Relations</a>
+      <span class="toc-chapter is-locked">7. Postulates & Measurement</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <span class="toc-chapter is-locked">8–13. Density matrices → Kraus → damping</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <span class="toc-chapter is-locked">14–19. Teleportation → GHZ/W → Dicke</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <span class="toc-chapter is-locked">22–31. Parallelism → Shor</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part I · Chapter 6</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Commutation Relations</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~18 min</span>
+        <span><b>Prerequisites</b> Ch. 1, Ch. 4</span>
+        <span><b>Tools</b> live commutator calculator, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <p class="lede">Ordinary numbers don't care which order you multiply them in: 3×5 and 5×3 are both 15. Matrices are not so polite. AB and BA can be completely different matrices — and the gap between them turns out to be one of the most physically important quantities in all of quantum mechanics.</p>
+
+      <h2>Order matters</h2>
+      <p>Take A = [[1,1],[0,1]] and B = [[1,0],[1,1]] — two matrices you can build right now in Ch. 1's Fig. 1.2. Multiply them one way: AB = [[2,1],[1,1]]. Multiply them the other way: BA = [[1,1],[1,2]]. Same two matrices, different answers depending on the order. This isn't a special case — it's the default. Two matrices that <em>do</em> happen to give the same answer either way are the exception, not the rule.</p>
+
+      <h2>The commutator</h2>
+      <p>The quantity that measures exactly how much order matters is the <strong>commutator</strong>:</p>
+      <p style="text-align:center; font-size: 18px;">[A,B] = AB − BA</p>
+      <p>If [A,B] = 0 (the zero matrix), A and B <strong>commute</strong> — order genuinely doesn't matter for these two. If [A,B] ≠ 0, they don't, and the commutator itself tells you precisely how they fail to.</p>
+
+      <figure class="qc-figure" id="commutator-widget">
+        <div class="figure-label"><span>Fig. 6.1 — edit A and B, or pick a preset</span><span>computes AB, BA, [A,B]</span></div>
+        <div class="figure-body">
+          <div class="matrix-controls">
+            <div>
+              <span class="vec-label" style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-faint);">A</span>
+              <div class="complex-grid" style="margin-top: 6px;">
+                <div class="complex-cell"><input id="ca00re" type="number" step="0.5" value="0" /><span>+</span><input id="ca00im" type="number" step="0.5" value="0" /><span>i</span></div>
+                <div class="complex-cell"><input id="ca01re" type="number" step="0.5" value="1" /><span>+</span><input id="ca01im" type="number" step="0.5" value="0" /><span>i</span></div>
+                <div class="complex-cell"><input id="ca10re" type="number" step="0.5" value="1" /><span>+</span><input id="ca10im" type="number" step="0.5" value="0" /><span>i</span></div>
+                <div class="complex-cell"><input id="ca11re" type="number" step="0.5" value="0" /><span>+</span><input id="ca11im" type="number" step="0.5" value="0" /><span>i</span></div>
+              </div>
+            </div>
+            <div>
+              <span class="vec-label" style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-faint);">B</span>
+              <div class="complex-grid" style="margin-top: 6px;">
+                <div class="complex-cell"><input id="cb00re" type="number" step="0.5" value="0" /><span>+</span><input id="cb00im" type="number" step="0.5" value="0" /><span>i</span></div>
+                <div class="complex-cell"><input id="cb01re" type="number" step="0.5" value="0" /><span>+</span><input id="cb01im" type="number" step="0.5" value="-1" /><span>i</span></div>
+                <div class="complex-cell"><input id="cb10re" type="number" step="0.5" value="0" /><span>+</span><input id="cb10im" type="number" step="0.5" value="1" /><span>i</span></div>
+                <div class="complex-cell"><input id="cb11re" type="number" step="0.5" value="0" /><span>+</span><input id="cb11im" type="number" step="0.5" value="0" /><span>i</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="preset-row">
+            <button class="commutator-preset matrix-preset" data-preset='{"A":[[{"re":0,"im":0},{"re":1,"im":0}],[{"re":1,"im":0},{"re":0,"im":0}]],"B":[[{"re":0,"im":0},{"re":0,"im":-1}],[{"re":0,"im":1},{"re":0,"im":0}]]}'>[X,Y]</button>
+            <button class="commutator-preset matrix-preset" data-preset='{"A":[[{"re":0,"im":0},{"re":1,"im":0}],[{"re":1,"im":0},{"re":0,"im":0}]],"B":[[{"re":1,"im":0},{"re":0,"im":0}],[{"re":0,"im":0},{"re":-1,"im":0}]]}'>[X,Z]</button>
+            <button class="commutator-preset matrix-preset" data-preset='{"A":[[{"re":0,"im":0},{"re":1,"im":0}],[{"re":1,"im":0},{"re":0,"im":0}]],"B":[[{"re":0,"im":0},{"re":1,"im":0}],[{"re":1,"im":0},{"re":0,"im":0}]]}'>[X,X]</button>
+            <button class="commutator-preset matrix-preset" data-preset='{"A":[[{"re":1,"im":0},{"re":0,"im":0}],[{"re":0,"im":0},{"re":1,"im":0}]],"B":[[{"re":0,"im":0},{"re":1,"im":0}],[{"re":1,"im":0},{"re":0,"im":0}]]}'>[I,X]</button>
+            <button class="commutator-preset matrix-preset" data-preset='{"A":[[{"re":0.7071,"im":0},{"re":0.7071,"im":0}],[{"re":0.7071,"im":0},{"re":-0.7071,"im":0}]],"B":[[{"re":1,"im":0},{"re":0,"im":0}],[{"re":0,"im":0},{"re":-1,"im":0}]]}'>[H,Z]</button>
+          </div>
+          <div class="commute-tag-row"><span class="op-status" id="commute-tag">Commute: —</span></div>
+          <div class="commutator-output-grid">
+            <div><h4>AB</h4><div id="commutator-ab"></div></div>
+            <div><h4>BA</h4><div id="commutator-ba"></div></div>
+            <div><h4>[A,B]</h4><div id="commutator-comm"></div></div>
+          </div>
+        </div>
+        <figcaption>The default preset is [X,Y] — the single most-quoted commutator in quantum computing. Try [X,X] (anything commutes with itself) and [I,X] (identity commutes with everything) to see the trivially-zero cases, then [H,Z] for a non-Pauli pair that still fails to commute.</figcaption>
+      </figure>
+
+      <h3>The famous result: [X,Y] = 2iZ</h3>
+      <p>Run the default preset above and you'll get exactly [[2i,0],[0,−2i]] — which is 2i times Z. This isn't a coincidence specific to this one pair: the three Pauli matrices satisfy [X,Y]=2iZ, [Y,Z]=2iX, [Z,X]=2iY, a cyclic pattern that is the algebraic signature of spin and angular momentum throughout physics. You don't need to memorize the pattern — the point worth keeping is that the commutator of two non-commuting Hermitian operators isn't garbage; it's a third operator, related to both, that turns up constantly once you start looking for it.</p>
+
+      <h2>Why this matters: simultaneous measurability</h2>
+      <p>Ch. 1 introduced eigenvectors as the special directions a matrix doesn't rotate. Here's the connection that makes commutators physically important: <strong>two operators share a complete set of common eigenvectors if and only if they commute.</strong> A shared eigenvector means both operators assign that state a definite, well-defined value at the same time.</p>
+      <p>So when [A,B] = 0, both observables can have simultaneously sharp, well-defined values. When [A,B] ≠ 0, there is no state where both have a perfectly definite value at once — pinning one down necessarily blurs the other. This is the actual mathematical content behind the Heisenberg uncertainty principle: position and momentum satisfy [x,p] = iℏ, which is never zero, which is precisely why no quantum state can have both an exactly known position and an exactly known momentum. The popular description ("you can't know both") is a consequence; the commutator being nonzero is the cause.</p>
+      <p>For qubits specifically: X and Z don't commute (try it in Fig. 6.1), which means there's no qubit state with a perfectly definite value for both "spin along x" and "spin along z" simultaneously. This is the same fact Ch. 3's Bloch sphere showed geometrically — a state can sit exactly on the z-axis or exactly on the x-axis, but never be a sharp eigenstate of both at once, because those axes correspond to non-commuting operators.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 6.2 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+X = np.array([[0, 1], [1, 0]])
+Y = np.array([[0, -1j], [1j, 0]])
+Z = np.array([[1, 0], [0, -1]])
+
+def commutator(A, B):
+    return A @ B - B @ A
+
+print("[X,Y] =\n", commutator(X, Y))
+print("2iZ   =\n", 2j * Z)
+print("Equal:", np.allclose(commutator(X, Y), 2j * Z))
+
+print("\n[X,X] =\n", commutator(X, X), " (always zero)")
+
+I = np.eye(2)
+print("\n[I,X] =\n", commutator(I, X), " (identity commutes with everything)")</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>np.allclose handles the floating-point comparison cleanly — exactly what Fig. 6.1's "Commute: YES/NO" tag does internally with a small tolerance.</figcaption>
+      </figure>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: commutators</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §2.1.9 (Exercises)</a><span class="res-note">Pauli commutation relations and their role in the stabilizer formalism used much later in the book.</span></li>
+          <li><span class="res-type">Article</span><a href="https://en.wikipedia.org/wiki/Canonical_commutation_relation" target="_blank" rel="noopener">Wikipedia — Canonical commutation relation</a><span class="res-note">The position-momentum [x,p]=iℏ relation referenced above, and its history.</span></li>
+          <li><span class="res-type">Tool</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.allclose.html" target="_blank" rel="noopener">NumPy docs — allclose</a><span class="res-note">Reference for the floating-point comparison used in Fig. 6.2.</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch06-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">If [A,B] = 0, what does that tell you about AB versus BA?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>They're equal — AB = BA. A zero commutator is exactly the definition of A and B commuting.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch06-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What is [A,A] for any matrix A, and why?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Always zero — [A,A] = AA − AA = 0. Any matrix trivially commutes with itself.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch06-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What is [X,Y] for the Pauli matrices, exactly?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>2iZ — verified directly in Fig. 6.1 and Fig. 6.2. Part of the cyclic pattern [X,Y]=2iZ, [Y,Z]=2iX, [Z,X]=2iY.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch06-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What does it mean, physically, for two observables to commute?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>They share a common set of eigenvectors, so there exist states where both observables have a simultaneously well-defined, sharp value. If they don't commute, no state can give both a perfectly definite value at once.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch06-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">How does [x,p] = iℏ explain the Heisenberg uncertainty principle, in terms of this chapter's ideas?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Since the commutator is nonzero, position and momentum don't share common eigenvectors — there's no quantum state with both an exactly defined position and an exactly defined momentum simultaneously. The nonzero commutator is the underlying cause; "you can't know both precisely" is the consequence people usually hear first.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/ch06-commutators.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>
