@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 5 — Tensor / Kronecker Product · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <a class="toc-chapter is-live" href="ch02-inner-outer-product.html">2. Inner & Outer Product</a>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <a class="toc-chapter is-live" href="ch04-unitary-hermitian.html">4. Unitary & Hermitian</a>
+      <a class="toc-chapter is-live is-current" href="ch05-tensor-kronecker-product.html">5. Tensor / Kronecker Product</a>
+      <span class="toc-chapter is-locked">6. Commutation Relations</span>
+      <span class="toc-chapter is-locked">7. Postulates & Measurement</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <span class="toc-chapter is-locked">8–13. Density matrices → Kraus → damping</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <span class="toc-chapter is-locked">14–19. Teleportation → GHZ/W → Dicke</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <span class="toc-chapter is-locked">22–31. Parallelism → Shor</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part I · Chapter 5</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Tensor / Kronecker Product</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~20 min</span>
+        <span><b>Prerequisites</b> Ch. 1–4</span>
+        <span><b>Tools</b> vector & matrix tensor builders, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <p class="lede">If you built anything in Ch. 3's two-qubit circuit widgets, you've already seen this sentence: <em>"a tensor/Kronecker product, see Ch. 5."</em> Here's the payoff. Every single-qubit gate you dragged onto one wire while leaving the other wire alone got silently expanded into a 4×4 matrix behind the scenes. This chapter is exactly how that expansion works, by hand.</p>
+
+      <h2>Why two qubits need a new operation</h2>
+      <p>A single qubit's state lives in a 2-entry vector. Naively, you might guess two qubits together need a 2+2 = 4-entry vector. They don't — they need 2×2 = 4. Combining independent systems multiplies dimensions, not adds them, and the operation that does this combining is the <strong>tensor product</strong>, written ⊗.</p>
+
+      <h2>The Kronecker product of two vectors</h2>
+      <p>For two 2-entry vectors a = (a₁,a₂) and b = (b₁,b₂), a⊗b stacks every possible pairwise product into a single 4-entry vector:</p>
+      <div style="text-align:center; margin: 14px 0;">$$a\otimes b=\begin{bmatrix}a_1\\a_2\end{bmatrix}\otimes\begin{bmatrix}b_1\\b_2\end{bmatrix}=\begin{bmatrix}a_1b_1\\a_1b_2\\a_2b_1\\a_2b_2\end{bmatrix}$$</div>
+
+      <figure class="qc-figure">
+        <div class="figure-label"><span>Fig. 5.1 — edit a and b</span><span>watch a⊗b assemble</span></div>
+        <div class="figure-body">
+          <div class="tensor-vec-inputs">
+            <div class="tensor-vec-group">
+              <span class="vec-label">a (treat as q1's state)</span>
+              <input id="tva1" type="number" step="0.5" value="1" />
+              <input id="tva2" type="number" step="0.5" value="0" />
+            </div>
+            <div class="tensor-vec-group">
+              <span class="vec-label">b (treat as q0's state)</span>
+              <input id="tvb1" type="number" step="0.5" value="0" />
+              <input id="tvb2" type="number" step="0.5" value="1" />
+            </div>
+          </div>
+          <div class="preset-row" style="margin-bottom: 14px;">
+            <button class="tensor-vec-preset matrix-preset" data-preset="1,0,1,0">|0⟩⊗|0⟩</button>
+            <button class="tensor-vec-preset matrix-preset" data-preset="1,0,0,1">|0⟩⊗|1⟩</button>
+            <button class="tensor-vec-preset matrix-preset" data-preset="0,1,1,0">|1⟩⊗|0⟩</button>
+            <button class="tensor-vec-preset matrix-preset" data-preset="0,1,0,1">|1⟩⊗|1⟩</button>
+            <button class="tensor-vec-preset matrix-preset" data-preset="0.7071,0.7071,1,0">|+⟩⊗|0⟩</button>
+          </div>
+          <div class="tensor-result-list" id="tensor-vec-result"></div>
+        </div>
+        <figcaption>Each output entry is one specific aᵢbⱼ product — there's no summing anywhere, unlike the inner product from Ch. 2. The four index labels are exactly the |00⟩, |01⟩, |10⟩, |11⟩ basis states from Ch. 3's two-qubit widgets.</figcaption>
+      </figure>
+
+      <h3>This is where |00⟩, |01⟩, |10⟩, |11⟩ actually come from</h3>
+      <p>Click the preset buttons above. |0⟩⊗|1⟩ gives (0,1,0,0) — index 1, which is exactly the |01⟩ row you watched light up in Ch. 3's probability charts. None of those four basis states were ever a separate definition; each one is just |0⟩ or |1⟩ tensored with |0⟩ or |1⟩, computed exactly the way Fig. 5.1 just computed it.</p>
+
+      <h2>The Kronecker product of two matrices</h2>
+      <p>Matrices tensor the same way, just with more entries. For 2×2 matrices A and B, A⊗B is a 4×4 matrix built by replacing every entry of A with that entry times the <em>entire</em> matrix B:</p>
+      <div style="text-align:center; margin: 14px 0;">$$A\otimes B=\begin{bmatrix}a_{11}B&a_{12}B\\a_{21}B&a_{22}B\end{bmatrix}$$</div>
+
+      <figure class="qc-figure">
+        <div class="figure-label"><span>Fig. 5.2 — edit A and B, or pick a preset</span><span>A⊗B, by block</span></div>
+        <div class="figure-body">
+          <div class="tensor-mat-inputs">
+            <div class="tensor-mat-group">
+              <span class="vec-label">A (q1's gate)</span>
+              <div class="matrix-input-grid">
+                <input id="tma00" type="number" step="0.5" value="1" /><input id="tma01" type="number" step="0.5" value="0" />
+                <input id="tma10" type="number" step="0.5" value="0" /><input id="tma11" type="number" step="0.5" value="1" />
+              </div>
+            </div>
+            <div class="tensor-mat-group">
+              <span class="vec-label">B (q0's gate)</span>
+              <div class="matrix-input-grid">
+                <input id="tmb00" type="number" step="0.5" value="0" /><input id="tmb01" type="number" step="0.5" value="1" />
+                <input id="tmb10" type="number" step="0.5" value="1" /><input id="tmb11" type="number" step="0.5" value="0" />
+              </div>
+            </div>
+          </div>
+          <div class="preset-row" style="margin-bottom: 14px;">
+            <button class="tensor-mat-preset matrix-preset" data-preset='{"A":[[1,0],[0,1]],"B":[[0,1],[1,0]]}'>I ⊗ X</button>
+            <button class="tensor-mat-preset matrix-preset" data-preset='{"A":[[0,1],[1,0]],"B":[[1,0],[0,1]]}'>X ⊗ I</button>
+            <button class="tensor-mat-preset matrix-preset" data-preset='{"A":[[1,0],[0,1]],"B":[[0.7071,0.7071],[0.7071,-0.7071]]}'>I ⊗ H</button>
+            <button class="tensor-mat-preset matrix-preset" data-preset='{"A":[[0,1],[1,0]],"B":[[0,1],[1,0]]}'>X ⊗ X</button>
+          </div>
+          <div class="tensor-block-grid" id="tensor-mat-result"></div>
+        </div>
+        <figcaption>Each colored quadrant is one entry of A, scaling a whole copy of B. Try "I ⊗ X": this is the literal 4×4 matrix Ch. 3's circuit code built when you dragged X onto q0 alone — a single-qubit gate, tensored with identity on the untouched qubit.</figcaption>
+      </figure>
+
+      <h3>Why CNOT can't be built this way</h3>
+      <p>Try to find an A and B in Fig. 5.2 whose tensor product gives CNOT. You can't — and that's not a failure of the widget, it's the actual mathematical fact that makes CNOT special. CNOT is a genuinely 2-qubit operation that cannot be factored into "something happening to q1" ⊗ "something happening to q0." Composer's gate inspector mentioned this back in Ch. 3: CNOT's "control depends on the other qubit's value" behavior is precisely the kind of correlation a tensor product structurally cannot represent — which is exactly why CNOT (and not any single-qubit gate combination) is the gate that creates entanglement.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 5.3 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+zero = np.array([1, 0])
+one  = np.array([0, 1])
+
+# Vector tensor product: builds the two-qubit basis states directly
+print("|0> kron |1> =", np.kron(zero, one), " (this is |01>)")
+
+I = np.eye(2)
+X = np.array([[0, 1], [1, 0]])
+H = (1/np.sqrt(2)) * np.array([[1, 1], [1, -1]])
+
+# Matrix tensor product: X acting on q0 only, identity on q1
+X_on_q0 = np.kron(I, X)
+print("I kron X =\n", X_on_q0)
+
+# Apply it to the |00> state and check the result
+state = np.kron(zero, zero)
+print("X_on_q0 @ |00> =", X_on_q0 @ state, " (should be |01>)")</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>np.kron is the function both Ch. 3's circuit code and this chapter's widgets compute by hand — same operation, now with a name.</figcaption>
+      </figure>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: tensor & Kronecker products</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §2.1.7</a><span class="res-note">The formal tensor product definition this chapter builds intuition for.</span></li>
+          <li><span class="res-type">Tool</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.kron.html" target="_blank" rel="noopener">NumPy docs — kron</a><span class="res-note">Reference for the function used in Fig. 5.3's code cell.</span></li>
+          <li><span class="res-type">Article</span><a href="https://en.wikipedia.org/wiki/Kronecker_product" target="_blank" rel="noopener">Wikipedia — Kronecker product</a><span class="res-note">Good reference for the general n×n case beyond the 2×2 examples here.</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch05-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Why does combining two qubits give a 4-dimensional space rather than a 2-dimensional one?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Combining independent systems multiplies their dimensions rather than adding them — 2 × 2 = 4. That multiplicative scaling is exactly what the tensor product computes.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch05-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What is (1,1)/√2 ⊗ (0,1) — i.e. |+⟩ ⊗ |1⟩?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>(0, 1/√2, 0, 1/√2) — each entry of the first vector multiplies the whole second vector: (1/√2)(0,1) then (1/√2)(0,1), interleaved as (1/√2·0, 1/√2·1, 1/√2·0, 1/√2·1).</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch05-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">If you want to apply gate G to q1 only, leaving q0 untouched, what matrix do you actually multiply the 4-entry state by?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>G ⊗ I — G tensored with the identity on q0's side, matching the convention where the first kron factor corresponds to the more significant qubit.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch05-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Why can't CNOT be written as A⊗B for any single-qubit matrices A and B?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>A tensor product A⊗B can only represent independent actions on each qubit — what happens to one qubit can never depend on the other's value. CNOT's entire definition is "flip the target depending on the control," which a tensor product structurally cannot encode. That's exactly why CNOT creates entanglement and single-qubit-gate combinations never can.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch05-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">In A⊗B for 2×2 matrices, how many total entries does the result have, and how is each one computed?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>16 entries (4×4). Each block is one entry of A times the entire matrix B — so entry (row, col) of the result is A[i][j]·B[p][q] for the appropriate i,j,p,q determined by which block and position within that block it falls in.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/ch05-tensor.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>
