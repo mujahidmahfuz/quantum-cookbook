@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 30 — Quantum Phase Estimation · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <a class="toc-chapter is-live" href="ch02-inner-outer-product.html">2. Inner & Outer Product</a>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <a class="toc-chapter is-live" href="ch04-unitary-hermitian.html">4. Unitary & Hermitian</a>
+      <a class="toc-chapter is-live" href="ch05-tensor-kronecker-product.html">5. Tensor / Kronecker Product</a>
+      <a class="toc-chapter is-live" href="ch06-commutation-relations.html">6. Commutation Relations</a>
+      <a class="toc-chapter is-live" href="ch07-postulates-measurement.html">7. Postulates & Measurement</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <a class="toc-chapter is-live" href="ch08-density-matrices.html">8. Density Matrices</a>
+      <a class="toc-chapter is-live" href="ch09-pure-mixed-states.html">9. Pure vs. Mixed States</a>
+      <a class="toc-chapter is-live" href="ch10-partial-trace.html">10. Partial Trace</a>
+      <a class="toc-chapter is-live" href="ch11-kraus-operators.html">11. Kraus Operators</a>
+      <a class="toc-chapter is-live" href="ch12-amplitude-phase-damping.html">12. Amplitude & Phase Damping</a>
+      <a class="toc-chapter is-live" href="ch13-amplifying-channel.html">13. Amplifying Channel</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <a class="toc-chapter is-live" href="ch14-quantum-teleportation.html">14. Quantum Teleportation</a>
+      <a class="toc-chapter is-live" href="ch15-locc.html">15. LOCC</a>
+      <a class="toc-chapter is-live" href="ch16-multipartite-entanglement.html">16. Multipartite Entanglement</a>
+      <a class="toc-chapter is-live" href="ch17-ghz-w-states.html">17. GHZ and W States</a>
+      <a class="toc-chapter is-live" href="ch18-cluster-graph-states.html">18. Cluster and Graph States</a>
+      <a class="toc-chapter is-live" href="ch19-dicke-states.html">19. Dicke States</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <a class="toc-chapter is-live" href="ch22-quantum-parallelism.html">22. Quantum Parallelism</a>
+      <a class="toc-chapter is-live" href="ch23-oracles.html">23. Oracles</a>
+      <a class="toc-chapter is-live" href="ch24-toffoli-gate.html">24. Toffoli Gate</a>
+      <a class="toc-chapter is-live" href="ch25-deutsch-algorithm.html">25. Deutsch's Algorithm</a>
+      <a class="toc-chapter is-live" href="ch26-deutsch-jozsa.html">26. Deutsch–Jozsa</a>
+      <a class="toc-chapter is-live" href="ch27-bernstein-vazirani.html">27. Bernstein–Vazirani</a>
+      <a class="toc-chapter is-live" href="ch28-grovers-algorithm.html">28. Grover's Algorithm</a>
+      <a class="toc-chapter is-live" href="ch29-quantum-fourier-transform.html">29. Quantum Fourier Transform</a>
+      <a class="toc-chapter is-live is-current" href="ch30-quantum-phase-estimation.html">30. Quantum Phase Estimation</a>
+      <a class="toc-chapter is-live" href="ch31-shors-algorithm.html">31. Shor's Algorithm</a>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part V · Chapter 30</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Quantum Phase Estimation</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~20 min</span>
+        <span><b>Prerequisites</b> Ch. 1, Ch. 4, Ch. 29</span>
+        <span><b>Tools</b> precision widget, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <span class="level-tag basic">Basic</span>
+      <p class="lede">Ch. 1 introduced eigenvalues; Ch. 4 noted that unitary matrices always have eigenvalues of the form e^(2πiφ) for some real φ. Quantum Phase Estimation (QPE) is the algorithm that actually measures φ — and it's the one piece standing between everything built so far and Shor's algorithm in Ch. 31.</p>
+
+      <h2>The setup</h2>
+      <p>You're given a unitary U and one of its eigenvectors |u⟩, with U|u⟩ = e^(2πiφ)|u⟩. The goal: estimate φ. The circuit uses t extra "counting" qubits, each controlling a power of U applied to |u⟩ — qubit k controls U^(2^k). Phase kickback (Ch. 23) deposits a phase onto each counting qubit proportional to φ; collectively, the counting register ends up holding exactly the kind of state Ch. 29's QFT is built to decode.</p>
+
+      <figure class="qc-figure">
+        <div class="figure-label"><span>Fig. 30.1 — the QPE circuit</span><span>counting register + eigenvector register</span></div>
+        <div class="figure-body circuit-diagram-wrap">
+          <svg width="380" height="170" viewBox="0 0 380 170">
+            <text x="10" y="34" font-family="JetBrains Mono, monospace" font-size="12" fill="#6e6a60">|0⟩</text>
+            <line x1="50" y1="30" x2="330" y2="30" stroke="#a39d8e" stroke-width="1" />
+            <text x="10" y="74" font-family="JetBrains Mono, monospace" font-size="12" fill="#6e6a60">|0⟩</text>
+            <line x1="50" y1="70" x2="330" y2="70" stroke="#a39d8e" stroke-width="1" />
+            <text x="10" y="114" font-family="JetBrains Mono, monospace" font-size="12" fill="#6e6a60">...</text>
+            <line x1="50" y1="110" x2="330" y2="110" stroke="#a39d8e" stroke-width="1" stroke-dasharray="2 4" />
+            <text x="10" y="154" font-family="JetBrains Mono, monospace" font-size="12" fill="#6e6a60">|u⟩</text>
+            <line x1="50" y1="150" x2="330" y2="150" stroke="#a39d8e" stroke-width="1" />
+
+            <rect x="70" y="14" width="34" height="32" fill="none" stroke="#2748c9" stroke-width="1.5" /><text x="87" y="34" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2748c9">H</text>
+            <rect x="70" y="54" width="34" height="32" fill="none" stroke="#2748c9" stroke-width="1.5" /><text x="87" y="74" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2748c9">H</text>
+
+            <circle cx="150" cy="30" r="5" fill="#1c1a16" /><line x1="150" y1="36" x2="150" y2="144" stroke="#1c1a16" stroke-width="1.2" />
+            <circle cx="200" cy="70" r="5" fill="#1c1a16" /><line x1="200" y1="76" x2="200" y2="144" stroke="#1c1a16" stroke-width="1.2" />
+            <rect x="130" y="138" width="140" height="24" fill="none" stroke="#a8702b" stroke-width="1.5" /><text x="200" y="154" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#a8702b">controlled-Uᵏ</text>
+
+            <rect x="280" y="0" width="40" height="120" fill="none" stroke="#7a3fa6" stroke-width="1.5" /><text x="300" y="64" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#7a3fa6" transform="rotate(-90 300 64)">QFT⁻¹</text>
+          </svg>
+        </div>
+        <figcaption>The purple box is exactly Ch. 29's inverse QFT — decoding the phase that kickback deposited across the counting qubits, the same "find the period" mechanism from Fig. 29.1, repurposed to read out φ.</figcaption>
+      </figure>
+
+      <span class="level-tag intermediate">Intermediate</span>
+      <figure class="qc-figure" id="qpe-widget">
+        <div class="figure-label"><span>Fig. 30.2 — set a true phase, adjust precision, watch it converge</span><span>more counting qubits = better estimate</span></div>
+        <div class="figure-body">
+          <div class="slider-row" style="max-width: 320px;">
+            <label><span>φ (true phase)</span><span id="qpe-phi-val">0.300</span></label>
+            <input type="range" id="qpe-phi-slider" min="0" max="0.999" step="0.001" value="0.3" />
+          </div>
+          <div class="slider-row" style="max-width: 320px;">
+            <label><span>t (counting qubits)</span><span id="qpe-t-val">4</span></label>
+            <input type="range" id="qpe-t-slider" min="2" max="8" step="1" value="4" />
+          </div>
+          <div class="amp-bar-panel" id="qpe-amps" style="margin: 14px 0;"></div>
+          <p class="vec-readout" id="qpe-result"></p>
+        </div>
+        <figcaption>Set φ to something exactly representable (try 0.25, 0.375, or any k/2ᵗ) and watch the error drop to exactly zero — then try an "ugly" value like 0.3 and watch the error shrink as you drag t upward, but never quite vanish.</figcaption>
+      </figure>
+
+      <h3>Exact vs. approximate phases</h3>
+      <p>If φ happens to be exactly representable in t bits (φ = k/2ᵗ for some integer k), QPE recovers it with certainty — probability exactly 1 on the correct outcome, the same all-or-nothing behavior Ch. 26's Deutsch–Jozsa showed for its promise. If φ isn't exactly representable, QPE still gives you the closest t-bit approximation with high probability, and that probability — along with the precision itself — improves as t grows.</p>
+
+      <span class="level-tag advanced">Advanced</span>
+      <h3>Why this specific algorithm is the bridge to Shor</h3>
+      <p>Shor's algorithm needs to find the order r of a number modulo N — the smallest r with aʳ≡1 (mod N). The unitary U:|x⟩↦|ax mod N⟩ has eigenvalues e^(2πis/r) for integers s, and QPE applied to this U is precisely how the order r gets extracted: estimate the phase s/r, then use a classical algorithm called continued fractions to recover r from that fraction. Every single piece is now in place — Ch. 23's kickback, Ch. 29's QFT, and this chapter's phase-reading — for Ch. 31 to assemble them into an algorithm that factors numbers exponentially faster than the best known classical method.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 30.3 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+def iqft(amps):
+    N = len(amps)
+    out = np.zeros(N, dtype=complex)
+    for x in range(N):
+        for y in range(N):
+            out[x] += amps[y] * np.exp(-2j * np.pi * x * y / N)
+        out[x] /= np.sqrt(N)
+    return out
+
+def estimate_phase(phi, t):
+    N = 2**t
+    amps = np.array([np.exp(2j*np.pi*phi*k)/np.sqrt(N) for k in range(N)])
+    result = iqft(amps)
+    probs = np.abs(result)**2
+    k_best = int(np.argmax(probs))
+    return k_best / N, probs[k_best]
+
+for t in [3, 5, 8, 12]:
+    est, p = estimate_phase(0.3, t)
+    print(f"t={t:2d} bits: estimate={est:.5f}  error={abs(est-0.3):.5f}  P={p:.3f}")</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>Watch the error shrink by roughly half each time t increases by 1 — the same convergence Fig. 30.2 shows visually.</figcaption>
+      </figure>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: quantum phase estimation</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §5.2</a><span class="res-note">The full QPE derivation and error analysis this chapter follows.</span></li>
+          <li><span class="res-type">Article</span><a href="https://en.wikipedia.org/wiki/Quantum_phase_estimation_algorithm" target="_blank" rel="noopener">Wikipedia — Quantum phase estimation algorithm</a><span class="res-note">General reference, including the connection to Shor's algorithm covered next.</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch30-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What does QPE estimate, given a unitary U and one of its eigenvectors |u⟩?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>The phase φ in U's eigenvalue e^(2πiφ) for that eigenvector.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch30-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What happens to the estimate's precision as you increase t, the number of counting qubits?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>It improves — the estimate converges toward the true phase, with the error roughly halving for each additional counting qubit.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch30-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">When does QPE recover φ with absolute certainty?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>When φ is exactly representable in t bits — φ = k/2ᵗ for some integer k. Otherwise it gives the closest t-bit approximation with high, but not certain, probability.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch30-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What two earlier-chapter ideas does the QPE circuit combine?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Phase kickback (Ch. 23), which deposits φ-dependent phases onto the counting register via controlled-Uᵏ gates, and the inverse QFT (Ch. 29), which decodes those phases back into a readable number.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch30-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">How does QPE connect to Shor's algorithm specifically?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>The unitary |x⟩↦|ax mod N⟩ has eigenvalues e^(2πis/r), where r is the order being sought. QPE estimates the phase s/r, and classical continued-fractions post-processing recovers r from that estimate.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/algo-shared.js"></script>
+<script src="../js/ch30-qpe.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>

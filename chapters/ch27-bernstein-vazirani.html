@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ch. 19 — Dicke States · Quantum Cookbook</title>
+<title>Ch. 27 — Bernstein–Vazirani Algorithm · Quantum Cookbook</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
@@ -49,7 +49,7 @@
       <a class="toc-chapter is-live" href="ch16-multipartite-entanglement.html">16. Multipartite Entanglement</a>
       <a class="toc-chapter is-live" href="ch17-ghz-w-states.html">17. GHZ and W States</a>
       <a class="toc-chapter is-live" href="ch18-cluster-graph-states.html">18. Cluster and Graph States</a>
-      <a class="toc-chapter is-live is-current" href="ch19-dicke-states.html">19. Dicke States</a>
+      <a class="toc-chapter is-live" href="ch19-dicke-states.html">19. Dicke States</a>
     </div>
     <div class="toc-part">
       <div class="toc-part-title">Part IV — Photonics</div>
@@ -62,7 +62,7 @@
       <a class="toc-chapter is-live" href="ch24-toffoli-gate.html">24. Toffoli Gate</a>
       <a class="toc-chapter is-live" href="ch25-deutsch-algorithm.html">25. Deutsch's Algorithm</a>
       <a class="toc-chapter is-live" href="ch26-deutsch-jozsa.html">26. Deutsch–Jozsa</a>
-      <a class="toc-chapter is-live" href="ch27-bernstein-vazirani.html">27. Bernstein–Vazirani</a>
+      <a class="toc-chapter is-live is-current" href="ch27-bernstein-vazirani.html">27. Bernstein–Vazirani</a>
       <a class="toc-chapter is-live" href="ch28-grovers-algorithm.html">28. Grover's Algorithm</a>
       <a class="toc-chapter is-live" href="ch29-quantum-fourier-transform.html">29. Quantum Fourier Transform</a>
       <a class="toc-chapter is-live" href="ch30-quantum-phase-estimation.html">30. Quantum Phase Estimation</a>
@@ -71,107 +71,97 @@
   </aside>
 
   <main class="content">
-    <p class="eyebrow">Part III · Chapter 19 · Final chapter of Part III</p>
-    <h1 style="font-size: 36px; margin: 8px 0 0;">Dicke States</h1>
+    <p class="eyebrow">Part V · Chapter 27</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Bernstein–Vazirani Algorithm</h1>
 
     <div class="lesson-header">
       <div class="lesson-meta-row">
         <span><b>Read</b> ~16 min</span>
-        <span><b>Prerequisites</b> Ch. 17</span>
-        <span><b>Tools</b> Dicke state builder, code cell</span>
+        <span><b>Prerequisites</b> Ch. 26</span>
+        <span><b>Tools</b> hidden-string widget, code cell</span>
         <span class="status-tag is-live">Live</span>
       </div>
     </div>
 
     <article class="chapter-body">
       <span class="level-tag basic">Basic</span>
-      <p class="lede">One last surprise to close out Part III: the W state you spent all of Ch. 17 studying wasn't actually its own separate thing. It's the simplest member of a whole family — Dicke states — and Part III's two headline examples, GHZ and W, turn out to sit in very different relationships to that family.</p>
+      <p class="lede">Same circuit as Ch. 26, one more time — but instead of classifying f into one of two buckets, this version's oracle hides an entire n-bit secret, and the algorithm reads the whole thing out, exactly, from a single query.</p>
 
-      <h2>The definition</h2>
-      <p>The Dicke state |D_n^k⟩ is the equal superposition of <em>every</em> n-qubit bitstring with exactly k ones (Hamming weight k):</p>
-      <p style="text-align:center; font-size: 17px;">|D_n^k⟩ = C(n,k)^(−1/2) Σ_{|x|=k} |x⟩</p>
-      <p>where C(n,k) is "n choose k," the number of distinct ways to place k ones among n positions, and the sum runs over every one of those bitstrings.</p>
+      <h2>The problem</h2>
+      <p>The oracle computes f(x) = s·x mod 2 — the bitwise dot product of x with some hidden n-bit string s, mod 2 — for an s you don't know and need to find. Classically this takes n separate queries: query x=1000...0 to learn s's first bit, x=0100...0 for the second, and so on, one bit revealed per query. The quantum algorithm needs exactly 1.</p>
 
       <span class="level-tag intermediate">Intermediate</span>
-      <figure class="qc-figure" id="dicke-widget">
-        <div class="figure-label"><span>Fig. 19.1 — pick n and k, see every term</span><span>equal superposition, live</span></div>
+      <figure class="qc-figure" id="bv-widget">
+        <div class="figure-label"><span>Fig. 27.1 — set the hidden string, run the circuit</span><span>recovered exactly, every time</span></div>
         <div class="figure-body">
-          <div class="slider-row" style="max-width: 320px;">
-            <label><span>n (number of qubits)</span><span id="dicke-n-val">4</span></label>
-            <input type="range" id="dicke-n-slider" min="2" max="6" step="1" value="4" />
+          <div class="slider-row" style="max-width: 280px; margin-bottom: 14px;">
+            <label><span>n (qubits)</span><span></span></label>
+            <input type="range" id="bv-n-slider" min="2" max="6" step="1" value="4" />
           </div>
-          <div class="slider-row" style="max-width: 320px;">
-            <label><span>k (number of excitations)</span><span id="dicke-k-val">2</span></label>
-            <input type="range" id="dicke-k-slider" min="0" max="4" step="1" value="2" />
-          </div>
-          <p class="vec-readout" id="dicke-binom" style="margin-top: 12px;"></p>
-          <p class="vec-readout" id="dicke-terms" style="margin-top: 8px; word-break: break-word;"></p>
-          <p class="vec-readout" id="dicke-norm" style="margin-top: 8px;"></p>
-          <p class="vec-readout" id="dicke-special" style="margin-top: 8px; color: var(--signal);"></p>
+          <p class="vec-readout" style="margin-bottom: 8px;">Hidden s = <strong id="bv-hidden-label"></strong> (click to change it):</p>
+          <div id="bv-s-toggles" style="margin-bottom: 16px;"></div>
+          <div class="amp-bar-panel" id="bv-amps"></div>
+          <p class="vec-readout" id="bv-result" style="margin-top: 12px;"></p>
         </div>
-        <figcaption>Set k=1 and watch the special-case note confirm it directly: that's exactly the W state from Ch. 17, just relabeled. The number of terms — C(n,k) — grows fast; try n=6, k=3 to see how quickly "every way to place k ones" stops being a small list.</figcaption>
+        <figcaption>The blue bar always lands exactly on the binary string you set as s — try every corner case: all zeros, all ones, alternating bits. One query, every time, perfect recovery.</figcaption>
       </figure>
 
-      <h3>Where GHZ fits — and doesn't</h3>
-      <p>W = D_n^1 is a Dicke state by definition. GHZ is <em>not</em> a Dicke state at all — it's a superposition of two different Dicke states, the trivial k=0 and k=n cases:</p>
-      <p style="text-align:center; font-size: 17px;">|GHZ_n⟩ = (|D_n^0⟩ + |D_n^n⟩)/√2 = (|00...0⟩ + |11...1⟩)/√2</p>
-      <p>This is a clean, formal way to state something Ch. 17 only showed you experimentally: W sits inside the well-behaved, permutation-symmetric Dicke family in the most direct way possible, while GHZ straddles two trivial corners of that same family.</p>
+      <h3>Why this works: it's Deutsch–Jozsa's math, reused</h3>
+      <p>Run through the identical H–oracle–H derivation from Ch. 26, but now with f(x)=s·x mod 2 instead of a generic balanced/constant function. The final amplitude on basis state y works out to be exactly 1 when y=s, and exactly 0 for every y≠s. There's no new mathematical machinery here at all — Bernstein–Vazirani is a specific, clever choice of oracle slotted into the exact circuit Ch. 26 already built.</p>
 
       <span class="level-tag advanced">Advanced</span>
-      <h3>Why "permutation symmetric" is the deeper property</h3>
-      <p>Every Dicke state is invariant under relabeling which qubit is which — swap any two qubits' positions and the state is completely unchanged, since the definition only ever cares about the <em>count</em> of ones, never their positions. This permutation symmetry isn't a curiosity: Dicke states are exactly the eigenstates of total collective angular momentum that show up throughout atomic and condensed-matter physics (the name comes from R.H. Dicke's 1954 work on collective spontaneous emission), and they're an active research tool in quantum metrology today, since a Dicke state's sensitivity to a parameter you're trying to measure can, in the right setup, beat what unentangled particles could ever achieve.</p>
+      <h3>What's genuinely new here</h3>
+      <p>Deutsch–Jozsa only ever answers a single yes/no question (constant or balanced); Bernstein–Vazirani extracts n full bits of hidden information in that same one query. This is the first algorithm in the book that demonstrates a quantum computer reading out a complete, exact classical answer — not just a property of one — exponentially faster than any classical strategy. It's also a direct structural preview of Simon's algorithm and the hidden subgroup problem more broadly, the family of problems Shor's algorithm (Ch. 31) ultimately belongs to: "find a hidden algebraic structure using interference from a superposition of queries" is the same recipe, just with progressively richer structure being hidden.</p>
 
       <figure class="qc-figure code-cell">
-        <div class="figure-label"><span>Fig. 19.2 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-label"><span>Fig. 27.2 — code, runs in your browser</span><span class="code-status"></span></div>
         <div class="figure-body">
           <textarea spellcheck="false">import numpy as np
-from itertools import combinations
-from math import comb
 
-def dicke_state(n, k):
-    dim = 2 ** n
-    state = np.zeros(dim)
-    norm = 1 / np.sqrt(comb(n, k))
-    for ones_positions in combinations(range(n), k):
-        idx = sum(1 << p for p in ones_positions)
-        state[idx] = norm
-    return state
+def hadamard_transform(amps, n):
+    H = (1/np.sqrt(2)) * np.array([[1, 1], [1, -1]])
+    full = H
+    for _ in range(n - 1):
+        full = np.kron(full, H)
+    return full @ amps
 
-n = 4
-for k in range(n + 1):
-    d = dicke_state(n, k)
-    nonzero = np.count_nonzero(d)
-    print(f"D_{n}^{k}: {nonzero} terms, norm = {np.sum(d**2):.3f}")
+def bernstein_vazirani(s, n):
+    N = 2**n
+    state = np.zeros(N); state[0] = 1
+    state = hadamard_transform(state, n)
+    f = lambda x: bin(x & s).count('1') % 2
+    state = np.array([(-1)**f(x) * amp for x, amp in enumerate(state)])
+    state = hadamard_transform(state, n)
+    recovered = int(np.argmax(np.abs(state)))
+    return recovered
 
-w_state = dicke_state(4, 1)
-print("\nD_4^1 is exactly the W state:", w_state)</textarea>
+n = 6
+for s in [0, 21, 63, 1]:
+    found = bernstein_vazirani(s, n)
+    print(f"hidden s={s:06b}  ->  recovered {found:06b}  {'CORRECT' if found == s else 'WRONG'}")</textarea>
           <div class="code-cell-actions">
             <button class="btn is-signal js-run">Run ▸</button>
             <button class="btn js-reset">Reset</button>
           </div>
           <div class="code-output"></div>
         </div>
-        <figcaption>The full row of D_4^k for k=0..4 shows the family GHZ borrows its two ends from — confirms the chapter's central claim numerically.</figcaption>
+        <figcaption>Every one of the 4 test strings — including the two extreme corner cases — recovers exactly, in a single simulated query.</figcaption>
       </figure>
 
       <div class="resource-panel">
-        <button class="resource-toggle"><span class="chev">▸</span> Further reading: Dicke states</button>
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: Bernstein–Vazirani</button>
         <ul class="resource-list">
-          <li><span class="res-type">Article</span><a href="https://medium.com/@deltorobarba/dicke-states-in-quantum-computing-06f9ada5ce22" target="_blank" rel="noopener">Del Toro Barba — Dicke States in Quantum Computing</a><span class="res-note">Accessible introduction confirming the definition and W-state special case used in this chapter.</span></li>
-          <li><span class="res-type">Paper</span><a href="https://arxiv.org/abs/1904.07358" target="_blank" rel="noopener">Bärtschi & Eidenbenz, "Deterministic Preparation of Dicke States" (arXiv)</a><span class="res-note">How to actually build a Dicke state with a real quantum circuit, beyond this chapter's definition.</span></li>
-          <li><span class="res-type">Paper</span><a href="https://arxiv.org/abs/1510.02561" target="_blank" rel="noopener">"Sheaf-Theoretic Methods in Quantum Mechanics" (arXiv)</a><span class="res-note">Confirms the formal Dicke state definition and notes W as the n,1 special case explicitly.</span></li>
+          <li><span class="res-type">Paper</span><a href="https://epubs.siam.org/doi/10.1137/S0097539796300921" target="_blank" rel="noopener">Bernstein & Vazirani, "Quantum Complexity Theory" (1997)</a><span class="res-note">The original paper.</span></li>
+          <li><span class="res-type">Article</span><a href="https://en.wikipedia.org/wiki/Hidden_subgroup_problem" target="_blank" rel="noopener">Wikipedia — Hidden subgroup problem</a><span class="res-note">The broader family this algorithm belongs to, leading toward Shor's algorithm (Ch. 31).</span></li>
         </ul>
       </div>
-
-      <h2 style="margin-top: 3em;">End of Part III</h2>
-      <p>Teleportation, LOCC, the separability hierarchy, GHZ/W, graph states, and Dicke states form a complete map of what "entangled" can mean once you're past two qubits. Part IV picks up the photonics thread Ch. 18 only gestured at — polarization beam splitters and the fusion gates that actually build graph states like the one in Fig. 18.1 out of real photons.</p>
     </article>
 
-    <div class="quiz-card" data-card-id="ch19-q1">
+    <div class="quiz-card" data-card-id="ch27-q1">
       <span class="eyebrow">Check your understanding</span>
-      <p class="quiz-question">What does |D_n^k⟩ mean in words?</p>
+      <p class="quiz-question">What does the Bernstein-Vazirani oracle compute?</p>
       <button class="btn js-reveal">Show answer</button>
-      <div class="quiz-answer"><p>The equal superposition of every n-qubit bitstring that has exactly k ones, normalized by 1/√C(n,k).</p></div>
+      <div class="quiz-answer"><p>f(x) = s·x mod 2 — the bitwise dot product of the input x with a hidden string s, summed mod 2.</p></div>
       <div class="quiz-rate">
         <button class="btn" data-quality="2">Hard</button>
         <button class="btn is-signal" data-quality="4">Good</button>
@@ -179,11 +169,11 @@ print("\nD_4^1 is exactly the W state:", w_state)</textarea>
       </div>
     </div>
 
-    <div class="quiz-card" data-card-id="ch19-q2">
+    <div class="quiz-card" data-card-id="ch27-q2">
       <span class="eyebrow">Check your understanding</span>
-      <p class="quiz-question">What value of k turns a Dicke state into the W state?</p>
+      <p class="quiz-question">How many queries does the classical and the quantum approach each need to find an n-bit hidden string?</p>
       <button class="btn js-reveal">Show answer</button>
-      <div class="quiz-answer"><p>k=1 — W is exactly D_n^1, the Dicke state with a single excitation.</p></div>
+      <div class="quiz-answer"><p>Classically, n queries (one bit revealed per query). Quantum: exactly 1.</p></div>
       <div class="quiz-rate">
         <button class="btn" data-quality="2">Hard</button>
         <button class="btn is-signal" data-quality="4">Good</button>
@@ -191,11 +181,11 @@ print("\nD_4^1 is exactly the W state:", w_state)</textarea>
       </div>
     </div>
 
-    <div class="quiz-card" data-card-id="ch19-q3">
+    <div class="quiz-card" data-card-id="ch27-q3">
       <span class="eyebrow">Check your understanding</span>
-      <p class="quiz-question">Is GHZ a Dicke state? Explain.</p>
+      <p class="quiz-question">What circuit does Bernstein-Vazirani reuse from Ch. 26, and what's actually new?</p>
       <button class="btn js-reveal">Show answer</button>
-      <div class="quiz-answer"><p>No — GHZ is a superposition of two different Dicke states (the trivial k=0 and k=n cases), not a single fixed-weight Dicke state itself.</p></div>
+      <div class="quiz-answer"><p>The exact same H–oracle–H circuit. What's new is just the specific oracle (f(x)=s·x mod 2) plugged into it, and the fact that the answer it extracts is a full n-bit string rather than a single yes/no classification.</p></div>
       <div class="quiz-rate">
         <button class="btn" data-quality="2">Hard</button>
         <button class="btn is-signal" data-quality="4">Good</button>
@@ -203,11 +193,11 @@ print("\nD_4^1 is exactly the W state:", w_state)</textarea>
       </div>
     </div>
 
-    <div class="quiz-card" data-card-id="ch19-q4">
+    <div class="quiz-card" data-card-id="ch27-q4">
       <span class="eyebrow">Check your understanding</span>
-      <p class="quiz-question">How many terms does D_5^2 have?</p>
+      <p class="quiz-question">After running the circuit, which measurement outcome do you expect, and with what probability?</p>
       <button class="btn js-reveal">Show answer</button>
-      <div class="quiz-answer"><p>C(5,2) = 10 — the number of ways to place 2 ones among 5 positions.</p></div>
+      <div class="quiz-answer"><p>The outcome y=s exactly, with probability 1 — every other outcome has probability exactly 0.</p></div>
       <div class="quiz-rate">
         <button class="btn" data-quality="2">Hard</button>
         <button class="btn is-signal" data-quality="4">Good</button>
@@ -215,11 +205,11 @@ print("\nD_4^1 is exactly the W state:", w_state)</textarea>
       </div>
     </div>
 
-    <div class="quiz-card" data-card-id="ch19-q5">
+    <div class="quiz-card" data-card-id="ch27-q5">
       <span class="eyebrow">Check your understanding</span>
-      <p class="quiz-question">What property do all Dicke states share, regardless of n and k?</p>
+      <p class="quiz-question">Why is Bernstein-Vazirani described as a preview of the "hidden subgroup problem" family that Shor's algorithm belongs to?</p>
       <button class="btn js-reveal">Show answer</button>
-      <div class="quiz-answer"><p>Permutation symmetry — swapping any two qubits leaves the state completely unchanged, since the definition only depends on the count of ones, never their positions.</p></div>
+      <div class="quiz-answer"><p>Both follow the same recipe: use superposition and interference to extract a hidden algebraic structure (a string here, a period in Shor's case) from a black-box function, using far fewer queries than any classical strategy.</p></div>
       <div class="quiz-rate">
         <button class="btn" data-quality="2">Hard</button>
         <button class="btn is-signal" data-quality="4">Good</button>
@@ -245,7 +235,8 @@ print("\nD_4^1 is exactly the W state:", w_state)</textarea>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 <script src="../js/main.js"></script>
 <script src="../js/code-cell.js"></script>
-<script src="../js/ch19-dicke.js"></script>
+<script src="../js/algo-shared.js"></script>
+<script src="../js/ch27-bv.js"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });

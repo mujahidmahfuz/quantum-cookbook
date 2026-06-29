@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ch. 19 — Dicke States · Quantum Cookbook</title>
+<title>Ch. 23 — Oracles · Quantum Cookbook</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
@@ -49,7 +49,7 @@
       <a class="toc-chapter is-live" href="ch16-multipartite-entanglement.html">16. Multipartite Entanglement</a>
       <a class="toc-chapter is-live" href="ch17-ghz-w-states.html">17. GHZ and W States</a>
       <a class="toc-chapter is-live" href="ch18-cluster-graph-states.html">18. Cluster and Graph States</a>
-      <a class="toc-chapter is-live is-current" href="ch19-dicke-states.html">19. Dicke States</a>
+      <a class="toc-chapter is-live" href="ch19-dicke-states.html">19. Dicke States</a>
     </div>
     <div class="toc-part">
       <div class="toc-part-title">Part IV — Photonics</div>
@@ -58,7 +58,7 @@
     <div class="toc-part">
       <div class="toc-part-title">Part V — Algorithms</div>
       <a class="toc-chapter is-live" href="ch22-quantum-parallelism.html">22. Quantum Parallelism</a>
-      <a class="toc-chapter is-live" href="ch23-oracles.html">23. Oracles</a>
+      <a class="toc-chapter is-live is-current" href="ch23-oracles.html">23. Oracles</a>
       <a class="toc-chapter is-live" href="ch24-toffoli-gate.html">24. Toffoli Gate</a>
       <a class="toc-chapter is-live" href="ch25-deutsch-algorithm.html">25. Deutsch's Algorithm</a>
       <a class="toc-chapter is-live" href="ch26-deutsch-jozsa.html">26. Deutsch–Jozsa</a>
@@ -71,107 +71,103 @@
   </aside>
 
   <main class="content">
-    <p class="eyebrow">Part III · Chapter 19 · Final chapter of Part III</p>
-    <h1 style="font-size: 36px; margin: 8px 0 0;">Dicke States</h1>
+    <p class="eyebrow">Part V · Chapter 23</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Oracles</h1>
 
     <div class="lesson-header">
       <div class="lesson-meta-row">
-        <span><b>Read</b> ~16 min</span>
-        <span><b>Prerequisites</b> Ch. 17</span>
-        <span><b>Tools</b> Dicke state builder, code cell</span>
+        <span><b>Read</b> ~20 min</span>
+        <span><b>Prerequisites</b> Ch. 22</span>
+        <span><b>Tools</b> phase-kickback widget, code cell</span>
         <span class="status-tag is-live">Live</span>
       </div>
     </div>
 
     <article class="chapter-body">
       <span class="level-tag basic">Basic</span>
-      <p class="lede">One last surprise to close out Part III: the W state you spent all of Ch. 17 studying wasn't actually its own separate thing. It's the simplest member of a whole family — Dicke states — and Part III's two headline examples, GHZ and W, turn out to sit in very different relationships to that family.</p>
+      <p class="lede">Ch. 22 waved a magic wand and said "query an oracle." This chapter opens the box. An oracle is a black-box circuit implementing some function f — you don't get to look inside it or simplify it, only query it — and there are two completely standard ways to wire one up, which turn out to be secretly the same thing.</p>
 
-      <h2>The definition</h2>
-      <p>The Dicke state |D_n^k⟩ is the equal superposition of <em>every</em> n-qubit bitstring with exactly k ones (Hamming weight k):</p>
-      <p style="text-align:center; font-size: 17px;">|D_n^k⟩ = C(n,k)^(−1/2) Σ_{|x|=k} |x⟩</p>
-      <p>where C(n,k) is "n choose k," the number of distinct ways to place k ones among n positions, and the sum runs over every one of those bitstrings.</p>
+      <h2>Convention 1: the bit-flip oracle</h2>
+      <p>The most literal version: an extra "answer" qubit y, and the oracle computes Uf|x⟩|y⟩ = |x⟩|y⊕f(x)⟩ — XOR the function's output into y. This is exactly how Ch. 18's CZ-style construction and ordinary classical-logic-as-a-circuit intuitions work.</p>
+
+      <h2>Convention 2: the phase oracle</h2>
+      <p>The version every algorithm in this book actually uses: Uf|x⟩ = (−1)^f(x)|x⟩ — no extra qubit, just a sign flip on the basis state itself, depending on f(x). This is exactly the oracle from Fig. 22.1.</p>
 
       <span class="level-tag intermediate">Intermediate</span>
-      <figure class="qc-figure" id="dicke-widget">
-        <div class="figure-label"><span>Fig. 19.1 — pick n and k, see every term</span><span>equal superposition, live</span></div>
+      <h3>Phase kickback: how convention 1 becomes convention 2</h3>
+      <p>Prepare the answer qubit y in the state |−⟩ = (|0⟩−|1⟩)/√2 instead of |0⟩, then apply the bit-flip oracle. Work through what happens to |x⟩|−⟩: if f(x)=0, |−⟩ is untouched; if f(x)=1, XOR flips it to (|1⟩−|0⟩)/√2 = −|−⟩. Either way, |−⟩ comes back completely unchanged — and the sign it would have flipped lands instead on the x register as a phase:</p>
+      <p style="text-align:center; font-size: 17px;">Uf|x⟩|−⟩ = (−1)^f(x)|x⟩|−⟩</p>
+      <p>This is called <strong>phase kickback</strong>, and it's the single most important trick in this part of the book: it converts any bit-flip oracle into exactly the phase oracle every algorithm needs, just by preparing the ancilla differently.</p>
+
+      <figure class="qc-figure" id="oracle-widget">
+        <div class="figure-label"><span>Fig. 23.1 — define f, watch kickback reproduce the phase oracle exactly</span><span>1-bit case</span></div>
         <div class="figure-body">
-          <div class="slider-row" style="max-width: 320px;">
-            <label><span>n (number of qubits)</span><span id="dicke-n-val">4</span></label>
-            <input type="range" id="dicke-n-slider" min="2" max="6" step="1" value="4" />
-          </div>
-          <div class="slider-row" style="max-width: 320px;">
-            <label><span>k (number of excitations)</span><span id="dicke-k-val">2</span></label>
-            <input type="range" id="dicke-k-slider" min="0" max="4" step="1" value="2" />
-          </div>
-          <p class="vec-readout" id="dicke-binom" style="margin-top: 12px;"></p>
-          <p class="vec-readout" id="dicke-terms" style="margin-top: 8px; word-break: break-word;"></p>
-          <p class="vec-readout" id="dicke-norm" style="margin-top: 8px;"></p>
-          <p class="vec-readout" id="dicke-special" style="margin-top: 8px; color: var(--signal);"></p>
+          <div class="truth-table-grid" id="oracle-truth-table" style="margin-bottom: 16px;"></div>
+          <p class="vec-readout" id="oracle-patha"></p>
+          <p class="vec-readout" id="oracle-pathb" style="margin-top: 8px;"></p>
+          <div class="op-status-row"><span class="op-status" id="oracle-tag" style="margin-top:10px;">—</span></div>
         </div>
-        <figcaption>Set k=1 and watch the special-case note confirm it directly: that's exactly the W state from Ch. 17, just relabeled. The number of terms — C(n,k) — grows fast; try n=6, k=3 to see how quickly "every way to place k ones" stops being a small list.</figcaption>
+        <figcaption>Click f(0) or f(1) to flip them — both computation paths update, and they match exactly every single time, for every one of the 4 possible 1-bit functions.</figcaption>
       </figure>
 
-      <h3>Where GHZ fits — and doesn't</h3>
-      <p>W = D_n^1 is a Dicke state by definition. GHZ is <em>not</em> a Dicke state at all — it's a superposition of two different Dicke states, the trivial k=0 and k=n cases:</p>
-      <p style="text-align:center; font-size: 17px;">|GHZ_n⟩ = (|D_n^0⟩ + |D_n^n⟩)/√2 = (|00...0⟩ + |11...1⟩)/√2</p>
-      <p>This is a clean, formal way to state something Ch. 17 only showed you experimentally: W sits inside the well-behaved, permutation-symmetric Dicke family in the most direct way possible, while GHZ straddles two trivial corners of that same family.</p>
-
       <span class="level-tag advanced">Advanced</span>
-      <h3>Why "permutation symmetric" is the deeper property</h3>
-      <p>Every Dicke state is invariant under relabeling which qubit is which — swap any two qubits' positions and the state is completely unchanged, since the definition only ever cares about the <em>count</em> of ones, never their positions. This permutation symmetry isn't a curiosity: Dicke states are exactly the eigenstates of total collective angular momentum that show up throughout atomic and condensed-matter physics (the name comes from R.H. Dicke's 1954 work on collective spontaneous emission), and they're an active research tool in quantum metrology today, since a Dicke state's sensitivity to a parameter you're trying to measure can, in the right setup, beat what unentangled particles could ever achieve.</p>
+      <h3>Why oracle complexity is the right way to compare algorithms</h3>
+      <p>Treating f as a black box isn't a simplification for teaching purposes — it's the actual standard for comparing quantum and classical algorithms fairly. "Query complexity" counts only oracle calls, deliberately ignoring how f itself is implemented, which isolates exactly the quantum advantage being claimed. Ch. 26's Deutsch–Jozsa algorithm needs exactly 1 oracle query no matter how large n gets; the best possible classical algorithm needs up to 2^(n−1)+1 queries in the worst case. That comparison is only meaningful because both sides agree on what counts as "one query" — which is precisely the oracle abstraction this chapter just built.</p>
 
       <figure class="qc-figure code-cell">
-        <div class="figure-label"><span>Fig. 19.2 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-label"><span>Fig. 23.2 — code, runs in your browser</span><span class="code-status"></span></div>
         <div class="figure-body">
           <textarea spellcheck="false">import numpy as np
-from itertools import combinations
-from math import comb
 
-def dicke_state(n, k):
-    dim = 2 ** n
-    state = np.zeros(dim)
-    norm = 1 / np.sqrt(comb(n, k))
-    for ones_positions in combinations(range(n), k):
-        idx = sum(1 << p for p in ones_positions)
-        state[idx] = norm
-    return state
+H = (1/np.sqrt(2)) * np.array([[1, 1], [1, -1]])
+X = np.array([[0, 1], [1, 0]])
+I = np.eye(2)
 
-n = 4
-for k in range(n + 1):
-    d = dicke_state(n, k)
-    nonzero = np.count_nonzero(d)
-    print(f"D_{n}^{k}: {nonzero} terms, norm = {np.sum(d**2):.3f}")
+def bit_flip_oracle(f):
+    # 4x4 matrix on (x, ancilla): flips ancilla bit whenever f(x)=1
+    U = np.eye(4)
+    for x in [0, 1]:
+        if f(x):
+            i0, i1 = 2*x + 0, 2*x + 1
+            U[[i0, i1]] = U[[i1, i0]]
+    return U
 
-w_state = dicke_state(4, 1)
-print("\nD_4^1 is exactly the W state:", w_state)</textarea>
+f = lambda x: x  # f(0)=0, f(1)=1
+
+# Path A: direct phase oracle on x alone
+x_state = H @ np.array([1, 0])
+x_state = np.array([(-1)**f(x) * amp for x, amp in enumerate(x_state)])
+print("Direct phase oracle:", np.round(x_state, 3))
+
+# Path B: bit-flip oracle, ancilla prepared in |->
+state = np.kron(H @ np.array([1, 0]), H @ (X @ np.array([1, 0])))
+state = bit_flip_oracle(f) @ state
+# extract the x-register's relative phase from the ancilla=0 slice
+recovered = np.array([state[0], state[2]]) * np.sqrt(2)
+print("Recovered via phase kickback:", np.round(recovered, 3))</textarea>
           <div class="code-cell-actions">
             <button class="btn is-signal js-run">Run ▸</button>
             <button class="btn js-reset">Reset</button>
           </div>
           <div class="code-output"></div>
         </div>
-        <figcaption>The full row of D_4^k for k=0..4 shows the family GHZ borrows its two ends from — confirms the chapter's central claim numerically.</figcaption>
+        <figcaption>Same two computations Fig. 23.1 runs live — confirms the widget isn't hiding anything.</figcaption>
       </figure>
 
       <div class="resource-panel">
-        <button class="resource-toggle"><span class="chev">▸</span> Further reading: Dicke states</button>
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: oracles & phase kickback</button>
         <ul class="resource-list">
-          <li><span class="res-type">Article</span><a href="https://medium.com/@deltorobarba/dicke-states-in-quantum-computing-06f9ada5ce22" target="_blank" rel="noopener">Del Toro Barba — Dicke States in Quantum Computing</a><span class="res-note">Accessible introduction confirming the definition and W-state special case used in this chapter.</span></li>
-          <li><span class="res-type">Paper</span><a href="https://arxiv.org/abs/1904.07358" target="_blank" rel="noopener">Bärtschi & Eidenbenz, "Deterministic Preparation of Dicke States" (arXiv)</a><span class="res-note">How to actually build a Dicke state with a real quantum circuit, beyond this chapter's definition.</span></li>
-          <li><span class="res-type">Paper</span><a href="https://arxiv.org/abs/1510.02561" target="_blank" rel="noopener">"Sheaf-Theoretic Methods in Quantum Mechanics" (arXiv)</a><span class="res-note">Confirms the formal Dicke state definition and notes W as the n,1 special case explicitly.</span></li>
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §1.4.4</a><span class="res-note">The original phase-kickback derivation this chapter follows.</span></li>
+          <li><span class="res-type">Tool</span><a href="https://qiskit.org/" target="_blank" rel="noopener">Qiskit textbook (qiskit.org)</a><span class="res-note">Worked examples building oracle circuits explicitly with ancilla qubits.</span></li>
         </ul>
       </div>
-
-      <h2 style="margin-top: 3em;">End of Part III</h2>
-      <p>Teleportation, LOCC, the separability hierarchy, GHZ/W, graph states, and Dicke states form a complete map of what "entangled" can mean once you're past two qubits. Part IV picks up the photonics thread Ch. 18 only gestured at — polarization beam splitters and the fusion gates that actually build graph states like the one in Fig. 18.1 out of real photons.</p>
     </article>
 
-    <div class="quiz-card" data-card-id="ch19-q1">
+    <div class="quiz-card" data-card-id="ch23-q1">
       <span class="eyebrow">Check your understanding</span>
-      <p class="quiz-question">What does |D_n^k⟩ mean in words?</p>
+      <p class="quiz-question">What's the difference between a bit-flip oracle and a phase oracle?</p>
       <button class="btn js-reveal">Show answer</button>
-      <div class="quiz-answer"><p>The equal superposition of every n-qubit bitstring that has exactly k ones, normalized by 1/√C(n,k).</p></div>
+      <div class="quiz-answer"><p>A bit-flip oracle XORs f(x) into an extra answer qubit: |x⟩|y⟩→|x⟩|y⊕f(x)⟩. A phase oracle has no extra qubit and just multiplies |x⟩ by (−1)^f(x).</p></div>
       <div class="quiz-rate">
         <button class="btn" data-quality="2">Hard</button>
         <button class="btn is-signal" data-quality="4">Good</button>
@@ -179,11 +175,11 @@ print("\nD_4^1 is exactly the W state:", w_state)</textarea>
       </div>
     </div>
 
-    <div class="quiz-card" data-card-id="ch19-q2">
+    <div class="quiz-card" data-card-id="ch23-q2">
       <span class="eyebrow">Check your understanding</span>
-      <p class="quiz-question">What value of k turns a Dicke state into the W state?</p>
+      <p class="quiz-question">What state should the answer qubit be prepared in to trigger phase kickback?</p>
       <button class="btn js-reveal">Show answer</button>
-      <div class="quiz-answer"><p>k=1 — W is exactly D_n^1, the Dicke state with a single excitation.</p></div>
+      <div class="quiz-answer"><p>|−⟩ = (|0⟩−|1⟩)/√2 — the eigenstate of the bit-flip itself, which is exactly why XOR-ing onto it just produces an overall sign instead of changing the qubit's state.</p></div>
       <div class="quiz-rate">
         <button class="btn" data-quality="2">Hard</button>
         <button class="btn is-signal" data-quality="4">Good</button>
@@ -191,11 +187,11 @@ print("\nD_4^1 is exactly the W state:", w_state)</textarea>
       </div>
     </div>
 
-    <div class="quiz-card" data-card-id="ch19-q3">
+    <div class="quiz-card" data-card-id="ch23-q3">
       <span class="eyebrow">Check your understanding</span>
-      <p class="quiz-question">Is GHZ a Dicke state? Explain.</p>
+      <p class="quiz-question">After phase kickback, what happens to the answer qubit's own state?</p>
       <button class="btn js-reveal">Show answer</button>
-      <div class="quiz-answer"><p>No — GHZ is a superposition of two different Dicke states (the trivial k=0 and k=n cases), not a single fixed-weight Dicke state itself.</p></div>
+      <div class="quiz-answer"><p>Nothing — it comes back exactly as |−⟩, completely unchanged. The phase that would have flipped it instead lands on the x register.</p></div>
       <div class="quiz-rate">
         <button class="btn" data-quality="2">Hard</button>
         <button class="btn is-signal" data-quality="4">Good</button>
@@ -203,11 +199,11 @@ print("\nD_4^1 is exactly the W state:", w_state)</textarea>
       </div>
     </div>
 
-    <div class="quiz-card" data-card-id="ch19-q4">
+    <div class="quiz-card" data-card-id="ch23-q4">
       <span class="eyebrow">Check your understanding</span>
-      <p class="quiz-question">How many terms does D_5^2 have?</p>
+      <p class="quiz-question">Why does treating f as a black box (rather than analyzing its internal implementation) make algorithm comparisons fair?</p>
       <button class="btn js-reveal">Show answer</button>
-      <div class="quiz-answer"><p>C(5,2) = 10 — the number of ways to place 2 ones among 5 positions.</p></div>
+      <div class="quiz-answer"><p>Because it isolates exactly the quantum advantage being measured — both the quantum and classical algorithm's costs are counted purely in oracle queries, so the comparison reflects a genuine difference in problem-solving strategy rather than implementation details of f.</p></div>
       <div class="quiz-rate">
         <button class="btn" data-quality="2">Hard</button>
         <button class="btn is-signal" data-quality="4">Good</button>
@@ -215,11 +211,11 @@ print("\nD_4^1 is exactly the W state:", w_state)</textarea>
       </div>
     </div>
 
-    <div class="quiz-card" data-card-id="ch19-q5">
+    <div class="quiz-card" data-card-id="ch23-q5">
       <span class="eyebrow">Check your understanding</span>
-      <p class="quiz-question">What property do all Dicke states share, regardless of n and k?</p>
+      <p class="quiz-question">For f(x) = 1 (constant 1), what does the phase oracle do to |0⟩ and |1⟩?</p>
       <button class="btn js-reveal">Show answer</button>
-      <div class="quiz-answer"><p>Permutation symmetry — swapping any two qubits leaves the state completely unchanged, since the definition only depends on the count of ones, never their positions.</p></div>
+      <div class="quiz-answer"><p>It flips the sign of both: |0⟩→−|0⟩ and |1⟩→−|1⟩ — an overall global phase of −1 on everything, since f is 1 for every input.</p></div>
       <div class="quiz-rate">
         <button class="btn" data-quality="2">Hard</button>
         <button class="btn is-signal" data-quality="4">Good</button>
@@ -245,7 +241,7 @@ print("\nD_4^1 is exactly the W state:", w_state)</textarea>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 <script src="../js/main.js"></script>
 <script src="../js/code-cell.js"></script>
-<script src="../js/ch19-dicke.js"></script>
+<script src="../js/ch23-oracles.js"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });

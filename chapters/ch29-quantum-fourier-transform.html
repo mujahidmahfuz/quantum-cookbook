@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ch. 19 — Dicke States · Quantum Cookbook</title>
+<title>Ch. 29 — Quantum Fourier Transform · Quantum Cookbook</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
@@ -49,7 +49,7 @@
       <a class="toc-chapter is-live" href="ch16-multipartite-entanglement.html">16. Multipartite Entanglement</a>
       <a class="toc-chapter is-live" href="ch17-ghz-w-states.html">17. GHZ and W States</a>
       <a class="toc-chapter is-live" href="ch18-cluster-graph-states.html">18. Cluster and Graph States</a>
-      <a class="toc-chapter is-live is-current" href="ch19-dicke-states.html">19. Dicke States</a>
+      <a class="toc-chapter is-live" href="ch19-dicke-states.html">19. Dicke States</a>
     </div>
     <div class="toc-part">
       <div class="toc-part-title">Part IV — Photonics</div>
@@ -64,114 +64,104 @@
       <a class="toc-chapter is-live" href="ch26-deutsch-jozsa.html">26. Deutsch–Jozsa</a>
       <a class="toc-chapter is-live" href="ch27-bernstein-vazirani.html">27. Bernstein–Vazirani</a>
       <a class="toc-chapter is-live" href="ch28-grovers-algorithm.html">28. Grover's Algorithm</a>
-      <a class="toc-chapter is-live" href="ch29-quantum-fourier-transform.html">29. Quantum Fourier Transform</a>
+      <a class="toc-chapter is-live is-current" href="ch29-quantum-fourier-transform.html">29. Quantum Fourier Transform</a>
       <a class="toc-chapter is-live" href="ch30-quantum-phase-estimation.html">30. Quantum Phase Estimation</a>
       <a class="toc-chapter is-live" href="ch31-shors-algorithm.html">31. Shor's Algorithm</a>
     </div>
   </aside>
 
   <main class="content">
-    <p class="eyebrow">Part III · Chapter 19 · Final chapter of Part III</p>
-    <h1 style="font-size: 36px; margin: 8px 0 0;">Dicke States</h1>
+    <p class="eyebrow">Part V · Chapter 29</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Quantum Fourier Transform</h1>
 
     <div class="lesson-header">
       <div class="lesson-meta-row">
-        <span><b>Read</b> ~16 min</span>
-        <span><b>Prerequisites</b> Ch. 17</span>
-        <span><b>Tools</b> Dicke state builder, code cell</span>
+        <span><b>Read</b> ~22 min</span>
+        <span><b>Prerequisites</b> Ch. 5, Ch. 22</span>
+        <span><b>Tools</b> period-detection widget, code cell</span>
         <span class="status-tag is-live">Live</span>
       </div>
     </div>
 
     <article class="chapter-body">
       <span class="level-tag basic">Basic</span>
-      <p class="lede">One last surprise to close out Part III: the W state you spent all of Ch. 17 studying wasn't actually its own separate thing. It's the simplest member of a whole family — Dicke states — and Part III's two headline examples, GHZ and W, turn out to sit in very different relationships to that family.</p>
+      <p class="lede">Grover's algorithm (Ch. 28) searches; the next two chapters are about a different superpower — detecting hidden periodicity, which turns out to be the actual mathematical engine behind breaking RSA encryption (Ch. 31). The Quantum Fourier Transform is the subroutine that makes it possible: the quantum analog of the ordinary discrete Fourier transform, converting a signal in "position" into the same signal described by its frequencies.</p>
 
       <h2>The definition</h2>
-      <p>The Dicke state |D_n^k⟩ is the equal superposition of <em>every</em> n-qubit bitstring with exactly k ones (Hamming weight k):</p>
-      <p style="text-align:center; font-size: 17px;">|D_n^k⟩ = C(n,k)^(−1/2) Σ_{|x|=k} |x⟩</p>
-      <p>where C(n,k) is "n choose k," the number of distinct ways to place k ones among n positions, and the sum runs over every one of those bitstrings.</p>
+      <p style="text-align:center; font-size: 17px;">QFT|x⟩ = (1/√N) Σ_y e^(2πixy/N) |y⟩</p>
+      <p>Every basis state |x⟩ gets spread into a superposition of every |y⟩, weighted by a complex phase that depends on x and y together. Applied to a full superposition rather than a single |x⟩, the linearity from Ch. 4 does the rest.</p>
 
       <span class="level-tag intermediate">Intermediate</span>
-      <figure class="qc-figure" id="dicke-widget">
-        <div class="figure-label"><span>Fig. 19.1 — pick n and k, see every term</span><span>equal superposition, live</span></div>
+      <figure class="qc-figure" id="qft-widget">
+        <div class="figure-label"><span>Fig. 29.1 — pick a period, watch the QFT find it</span><span>N=16</span></div>
         <div class="figure-body">
-          <div class="slider-row" style="max-width: 320px;">
-            <label><span>n (number of qubits)</span><span id="dicke-n-val">4</span></label>
-            <input type="range" id="dicke-n-slider" min="2" max="6" step="1" value="4" />
+          <div class="preset-row" style="margin-bottom: 14px;">
+            <button class="qft-period-btn matrix-preset" data-period="2">period 2</button>
+            <button class="qft-period-btn matrix-preset is-active" data-period="4">period 4</button>
+            <button class="qft-period-btn matrix-preset" data-period="8">period 8</button>
           </div>
-          <div class="slider-row" style="max-width: 320px;">
-            <label><span>k (number of excitations)</span><span id="dicke-k-val">2</span></label>
-            <input type="range" id="dicke-k-slider" min="0" max="4" step="1" value="2" />
-          </div>
-          <p class="vec-readout" id="dicke-binom" style="margin-top: 12px;"></p>
-          <p class="vec-readout" id="dicke-terms" style="margin-top: 8px; word-break: break-word;"></p>
-          <p class="vec-readout" id="dicke-norm" style="margin-top: 8px;"></p>
-          <p class="vec-readout" id="dicke-special" style="margin-top: 8px; color: var(--signal);"></p>
+          <p class="eyebrow" style="display:block; margin-bottom: 6px;">Input (a periodic "comb" of spikes)</p>
+          <div class="amp-bar-panel" id="qft-input-panel"></div>
+          <p class="eyebrow" style="display:block; margin: 16px 0 6px;">Output (QFT applied)</p>
+          <div class="amp-bar-panel" id="qft-output-panel"></div>
+          <p class="vec-readout" id="qft-readout" style="margin-top: 14px;"></p>
         </div>
-        <figcaption>Set k=1 and watch the special-case note confirm it directly: that's exactly the W state from Ch. 17, just relabeled. The number of terms — C(n,k) — grows fast; try n=6, k=3 to see how quickly "every way to place k ones" stops being a small list.</figcaption>
+        <figcaption>This is the single most important fact about the QFT for everything that follows: feed it a periodic pattern, and it hands back spikes exactly at the period's multiples. Ch. 30 and Ch. 31 are both, underneath, applications of exactly this behavior.</figcaption>
       </figure>
 
-      <h3>Where GHZ fits — and doesn't</h3>
-      <p>W = D_n^1 is a Dicke state by definition. GHZ is <em>not</em> a Dicke state at all — it's a superposition of two different Dicke states, the trivial k=0 and k=n cases:</p>
-      <p style="text-align:center; font-size: 17px;">|GHZ_n⟩ = (|D_n^0⟩ + |D_n^n⟩)/√2 = (|00...0⟩ + |11...1⟩)/√2</p>
-      <p>This is a clean, formal way to state something Ch. 17 only showed you experimentally: W sits inside the well-behaved, permutation-symmetric Dicke family in the most direct way possible, while GHZ straddles two trivial corners of that same family.</p>
+      <h3>Why this is the right generalization of the classical FFT</h3>
+      <p>The classical discrete Fourier transform turns a signal sampled at N points into N frequency components, in O(N log N) classical operations via the Fast Fourier Transform. The quantum version computes the analogous transform on n=log₂N qubits using only O(n²) quantum gates — exponentially fewer gates than even the classical FFT needs additions. The catch, and it's a serious one: you can't read out all N transformed amplitudes the way classical FFT output lets you — Ch. 7's Born rule only ever gives you one measurement. The QFT's speed is only useful when, like Ch. 30's phase estimation, you only need a small amount of information out of the transformed state, not the whole thing.</p>
 
       <span class="level-tag advanced">Advanced</span>
-      <h3>Why "permutation symmetric" is the deeper property</h3>
-      <p>Every Dicke state is invariant under relabeling which qubit is which — swap any two qubits' positions and the state is completely unchanged, since the definition only ever cares about the <em>count</em> of ones, never their positions. This permutation symmetry isn't a curiosity: Dicke states are exactly the eigenstates of total collective angular momentum that show up throughout atomic and condensed-matter physics (the name comes from R.H. Dicke's 1954 work on collective spontaneous emission), and they're an active research tool in quantum metrology today, since a Dicke state's sensitivity to a parameter you're trying to measure can, in the right setup, beat what unentangled particles could ever achieve.</p>
+      <h3>How the O(n²) gate count is actually achieved</h3>
+      <p>The circuit that implements the QFT efficiently uses H gates and controlled phase-rotation gates R_k = diag(1, e^(2πi/2^k)) between every pair of qubits, followed by a final bit-reversal of the output register. The controlled-phase structure is exactly Ch. 5's tensor-product machinery combined with Ch. 23's phase-oracle idea, applied recursively — it's the same building blocks from earlier chapters, arranged cleverly enough to avoid ever needing the full N×N matrix this chapter's definition writes down explicitly.</p>
 
       <figure class="qc-figure code-cell">
-        <div class="figure-label"><span>Fig. 19.2 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-label"><span>Fig. 29.2 — code, runs in your browser</span><span class="code-status"></span></div>
         <div class="figure-body">
           <textarea spellcheck="false">import numpy as np
-from itertools import combinations
-from math import comb
 
-def dicke_state(n, k):
-    dim = 2 ** n
-    state = np.zeros(dim)
-    norm = 1 / np.sqrt(comb(n, k))
-    for ones_positions in combinations(range(n), k):
-        idx = sum(1 << p for p in ones_positions)
-        state[idx] = norm
-    return state
+def qft(amps):
+    N = len(amps)
+    out = np.zeros(N, dtype=complex)
+    for y in range(N):
+        for x in range(N):
+            out[y] += amps[x] * np.exp(2j * np.pi * x * y / N)
+        out[y] /= np.sqrt(N)
+    return out
 
-n = 4
-for k in range(n + 1):
-    d = dicke_state(n, k)
-    nonzero = np.count_nonzero(d)
-    print(f"D_{n}^{k}: {nonzero} terms, norm = {np.sum(d**2):.3f}")
+N = 16
+period = 4
+comb = np.array([1 if x % period == 0 else 0 for x in range(N)], dtype=complex)
+comb = comb / np.linalg.norm(comb)
 
-w_state = dicke_state(4, 1)
-print("\nD_4^1 is exactly the W state:", w_state)</textarea>
+result = qft(comb)
+probs = np.abs(result)**2
+print("QFT output probabilities:", np.round(probs, 3))
+print("Nonzero at:", [y for y in range(N) if probs[y] > 1e-6], " (multiples of N/period =", N//period, ")")</textarea>
           <div class="code-cell-actions">
             <button class="btn is-signal js-run">Run ▸</button>
             <button class="btn js-reset">Reset</button>
           </div>
           <div class="code-output"></div>
         </div>
-        <figcaption>The full row of D_4^k for k=0..4 shows the family GHZ borrows its two ends from — confirms the chapter's central claim numerically.</figcaption>
+        <figcaption>Try changing `period` to 2 or 8 and re-running — the nonzero output positions always land exactly on multiples of N/period, matching Fig. 29.1.</figcaption>
       </figure>
 
       <div class="resource-panel">
-        <button class="resource-toggle"><span class="chev">▸</span> Further reading: Dicke states</button>
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: the Quantum Fourier Transform</button>
         <ul class="resource-list">
-          <li><span class="res-type">Article</span><a href="https://medium.com/@deltorobarba/dicke-states-in-quantum-computing-06f9ada5ce22" target="_blank" rel="noopener">Del Toro Barba — Dicke States in Quantum Computing</a><span class="res-note">Accessible introduction confirming the definition and W-state special case used in this chapter.</span></li>
-          <li><span class="res-type">Paper</span><a href="https://arxiv.org/abs/1904.07358" target="_blank" rel="noopener">Bärtschi & Eidenbenz, "Deterministic Preparation of Dicke States" (arXiv)</a><span class="res-note">How to actually build a Dicke state with a real quantum circuit, beyond this chapter's definition.</span></li>
-          <li><span class="res-type">Paper</span><a href="https://arxiv.org/abs/1510.02561" target="_blank" rel="noopener">"Sheaf-Theoretic Methods in Quantum Mechanics" (arXiv)</a><span class="res-note">Confirms the formal Dicke state definition and notes W as the n,1 special case explicitly.</span></li>
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §5.1</a><span class="res-note">The full circuit construction with controlled phase-rotation gates.</span></li>
+          <li><span class="res-type">Article</span><a href="https://en.wikipedia.org/wiki/Quantum_Fourier_transform" target="_blank" rel="noopener">Wikipedia — Quantum Fourier transform</a><span class="res-note">General reference and the circuit diagram in full.</span></li>
         </ul>
       </div>
-
-      <h2 style="margin-top: 3em;">End of Part III</h2>
-      <p>Teleportation, LOCC, the separability hierarchy, GHZ/W, graph states, and Dicke states form a complete map of what "entangled" can mean once you're past two qubits. Part IV picks up the photonics thread Ch. 18 only gestured at — polarization beam splitters and the fusion gates that actually build graph states like the one in Fig. 18.1 out of real photons.</p>
     </article>
 
-    <div class="quiz-card" data-card-id="ch19-q1">
+    <div class="quiz-card" data-card-id="ch29-q1">
       <span class="eyebrow">Check your understanding</span>
-      <p class="quiz-question">What does |D_n^k⟩ mean in words?</p>
+      <p class="quiz-question">What does the QFT do to a basis state |x⟩?</p>
       <button class="btn js-reveal">Show answer</button>
-      <div class="quiz-answer"><p>The equal superposition of every n-qubit bitstring that has exactly k ones, normalized by 1/√C(n,k).</p></div>
+      <div class="quiz-answer"><p>Spreads it into a superposition of every |y⟩, each weighted by a complex phase e^(2πixy/N) — analogous to how the classical Fourier transform decomposes a signal into frequency components.</p></div>
       <div class="quiz-rate">
         <button class="btn" data-quality="2">Hard</button>
         <button class="btn is-signal" data-quality="4">Good</button>
@@ -179,11 +169,11 @@ print("\nD_4^1 is exactly the W state:", w_state)</textarea>
       </div>
     </div>
 
-    <div class="quiz-card" data-card-id="ch19-q2">
+    <div class="quiz-card" data-card-id="ch29-q2">
       <span class="eyebrow">Check your understanding</span>
-      <p class="quiz-question">What value of k turns a Dicke state into the W state?</p>
+      <p class="quiz-question">If you feed the QFT a periodic input with period p (within N total positions), where does the output concentrate?</p>
       <button class="btn js-reveal">Show answer</button>
-      <div class="quiz-answer"><p>k=1 — W is exactly D_n^1, the Dicke state with a single excitation.</p></div>
+      <div class="quiz-answer"><p>Exactly at multiples of N/p — every other output amplitude is zero.</p></div>
       <div class="quiz-rate">
         <button class="btn" data-quality="2">Hard</button>
         <button class="btn is-signal" data-quality="4">Good</button>
@@ -191,11 +181,11 @@ print("\nD_4^1 is exactly the W state:", w_state)</textarea>
       </div>
     </div>
 
-    <div class="quiz-card" data-card-id="ch19-q3">
+    <div class="quiz-card" data-card-id="ch29-q3">
       <span class="eyebrow">Check your understanding</span>
-      <p class="quiz-question">Is GHZ a Dicke state? Explain.</p>
+      <p class="quiz-question">How many gates does the efficient QFT circuit need, for n qubits, compared to the classical FFT?</p>
       <button class="btn js-reveal">Show answer</button>
-      <div class="quiz-answer"><p>No — GHZ is a superposition of two different Dicke states (the trivial k=0 and k=n cases), not a single fixed-weight Dicke state itself.</p></div>
+      <div class="quiz-answer"><p>O(n²) quantum gates, versus O(N log N) = O(n·2ⁿ) classical operations — exponentially fewer.</p></div>
       <div class="quiz-rate">
         <button class="btn" data-quality="2">Hard</button>
         <button class="btn is-signal" data-quality="4">Good</button>
@@ -203,11 +193,11 @@ print("\nD_4^1 is exactly the W state:", w_state)</textarea>
       </div>
     </div>
 
-    <div class="quiz-card" data-card-id="ch19-q4">
+    <div class="quiz-card" data-card-id="ch29-q4">
       <span class="eyebrow">Check your understanding</span>
-      <p class="quiz-question">How many terms does D_5^2 have?</p>
+      <p class="quiz-question">Why isn't the QFT's speed advantage usable for ordinary classical-style signal processing?</p>
       <button class="btn js-reveal">Show answer</button>
-      <div class="quiz-answer"><p>C(5,2) = 10 — the number of ways to place 2 ones among 5 positions.</p></div>
+      <div class="quiz-answer"><p>Because a single measurement only ever gives you one of the N transformed amplitudes, not the full output the way classical FFT does. The speedup is only useful when you need just a small amount of information from the result, as in phase estimation (Ch. 30).</p></div>
       <div class="quiz-rate">
         <button class="btn" data-quality="2">Hard</button>
         <button class="btn is-signal" data-quality="4">Good</button>
@@ -215,11 +205,11 @@ print("\nD_4^1 is exactly the W state:", w_state)</textarea>
       </div>
     </div>
 
-    <div class="quiz-card" data-card-id="ch19-q5">
+    <div class="quiz-card" data-card-id="ch29-q5">
       <span class="eyebrow">Check your understanding</span>
-      <p class="quiz-question">What property do all Dicke states share, regardless of n and k?</p>
+      <p class="quiz-question">What two earlier chapters' ideas combine to make the efficient O(n²) QFT circuit work?</p>
       <button class="btn js-reveal">Show answer</button>
-      <div class="quiz-answer"><p>Permutation symmetry — swapping any two qubits leaves the state completely unchanged, since the definition only depends on the count of ones, never their positions.</p></div>
+      <div class="quiz-answer"><p>Ch. 5's tensor-product structure and Ch. 23's phase-oracle/phase-rotation idea, arranged recursively as controlled phase-rotation gates between qubit pairs.</p></div>
       <div class="quiz-rate">
         <button class="btn" data-quality="2">Hard</button>
         <button class="btn is-signal" data-quality="4">Good</button>
@@ -245,7 +235,8 @@ print("\nD_4^1 is exactly the W state:", w_state)</textarea>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 <script src="../js/main.js"></script>
 <script src="../js/code-cell.js"></script>
-<script src="../js/ch19-dicke.js"></script>
+<script src="../js/algo-shared.js"></script>
+<script src="../js/ch29-qft.js"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 28 — Grover's Algorithm · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <a class="toc-chapter is-live" href="ch02-inner-outer-product.html">2. Inner & Outer Product</a>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <a class="toc-chapter is-live" href="ch04-unitary-hermitian.html">4. Unitary & Hermitian</a>
+      <a class="toc-chapter is-live" href="ch05-tensor-kronecker-product.html">5. Tensor / Kronecker Product</a>
+      <a class="toc-chapter is-live" href="ch06-commutation-relations.html">6. Commutation Relations</a>
+      <a class="toc-chapter is-live" href="ch07-postulates-measurement.html">7. Postulates & Measurement</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <a class="toc-chapter is-live" href="ch08-density-matrices.html">8. Density Matrices</a>
+      <a class="toc-chapter is-live" href="ch09-pure-mixed-states.html">9. Pure vs. Mixed States</a>
+      <a class="toc-chapter is-live" href="ch10-partial-trace.html">10. Partial Trace</a>
+      <a class="toc-chapter is-live" href="ch11-kraus-operators.html">11. Kraus Operators</a>
+      <a class="toc-chapter is-live" href="ch12-amplitude-phase-damping.html">12. Amplitude & Phase Damping</a>
+      <a class="toc-chapter is-live" href="ch13-amplifying-channel.html">13. Amplifying Channel</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <a class="toc-chapter is-live" href="ch14-quantum-teleportation.html">14. Quantum Teleportation</a>
+      <a class="toc-chapter is-live" href="ch15-locc.html">15. LOCC</a>
+      <a class="toc-chapter is-live" href="ch16-multipartite-entanglement.html">16. Multipartite Entanglement</a>
+      <a class="toc-chapter is-live" href="ch17-ghz-w-states.html">17. GHZ and W States</a>
+      <a class="toc-chapter is-live" href="ch18-cluster-graph-states.html">18. Cluster and Graph States</a>
+      <a class="toc-chapter is-live" href="ch19-dicke-states.html">19. Dicke States</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <a class="toc-chapter is-live" href="ch22-quantum-parallelism.html">22. Quantum Parallelism</a>
+      <a class="toc-chapter is-live" href="ch23-oracles.html">23. Oracles</a>
+      <a class="toc-chapter is-live" href="ch24-toffoli-gate.html">24. Toffoli Gate</a>
+      <a class="toc-chapter is-live" href="ch25-deutsch-algorithm.html">25. Deutsch's Algorithm</a>
+      <a class="toc-chapter is-live" href="ch26-deutsch-jozsa.html">26. Deutsch–Jozsa</a>
+      <a class="toc-chapter is-live" href="ch27-bernstein-vazirani.html">27. Bernstein–Vazirani</a>
+      <a class="toc-chapter is-live is-current" href="ch28-grovers-algorithm.html">28. Grover's Algorithm</a>
+      <a class="toc-chapter is-live" href="ch29-quantum-fourier-transform.html">29. Quantum Fourier Transform</a>
+      <a class="toc-chapter is-live" href="ch30-quantum-phase-estimation.html">30. Quantum Phase Estimation</a>
+      <a class="toc-chapter is-live" href="ch31-shors-algorithm.html">31. Shor's Algorithm</a>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part V · Chapter 28</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Grover's Algorithm</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~24 min</span>
+        <span><b>Prerequisites</b> Ch. 22–23</span>
+        <span><b>Tools</b> amplitude-amplification widget, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <span class="level-tag basic">Basic</span>
+      <p class="lede">Search an unsorted list of N items for one marked item, with no structure to exploit — classically, there's no better strategy than checking items one by one, ~N/2 checks on average. Grover's algorithm does it in roughly √N queries. This is a real, hard, generically useful problem — not engineered to showcase a gap like Ch. 26's promise-based one — and the speedup, while not exponential, is genuinely useful and provably optimal.</p>
+
+      <h2>The two ingredients</h2>
+      <p>One Grover <strong>iteration</strong> is two steps applied in sequence:</p>
+      <ol>
+        <li><strong>The oracle</strong> — exactly Ch. 23's phase oracle, flipping the sign of the marked item only.</li>
+        <li><strong>The diffusion operator</strong> — reflects every amplitude about their average value. (|0⟩ Hadamard transform, flip the sign of everything except |0⟩, Hadamard transform back — three steps that together perform exactly this reflection.)</li>
+      </ol>
+
+      <figure class="qc-figure">
+        <div class="figure-label"><span>Fig. 28.1 — one Grover iteration</span><span>oracle, then diffusion, repeated</span></div>
+        <div class="figure-body circuit-diagram-wrap">
+          <svg width="380" height="100" viewBox="0 0 380 100">
+            <text x="10" y="34" font-family="JetBrains Mono, monospace" font-size="12" fill="#6e6a60">|s⟩</text>
+            <line x1="50" y1="30" x2="350" y2="30" stroke="#a39d8e" stroke-width="1" />
+            <rect x="80" y="14" width="60" height="32" fill="none" stroke="#a8702b" stroke-width="1.5" /><text x="110" y="34" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#a8702b">Oracle</text>
+            <rect x="160" y="14" width="80" height="32" fill="none" stroke="#2748c9" stroke-width="1.5" /><text x="200" y="34" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2748c9">Diffusion</text>
+            <text x="270" y="34" font-family="JetBrains Mono, monospace" font-size="13" fill="#1c1a16">× (√N times)</text>
+          </svg>
+        </div>
+        <figcaption>Repeat this whole block ≈ π/4·√N times — not more, not fewer. Fig. 28.2 will show you exactly why the count matters this precisely.</figcaption>
+      </figure>
+
+      <span class="level-tag intermediate">Intermediate</span>
+      <figure class="qc-figure" id="grover-widget">
+        <div class="figure-label"><span>Fig. 28.2 — adjust N, the marked item, and the iteration count</span><span>watch it overshoot if you go too far</span></div>
+        <div class="figure-body">
+          <div class="slider-row" style="max-width: 280px;">
+            <label><span>n (so N=2ⁿ items)</span><span id="grover-n-val">4</span></label>
+            <input type="range" id="grover-n-slider" min="3" max="6" step="1" value="4" />
+          </div>
+          <div class="slider-row" style="max-width: 280px;">
+            <label><span>marked item</span><span id="grover-marked-val"></span></label>
+            <input type="range" id="grover-marked-slider" min="0" max="15" step="1" value="5" />
+          </div>
+          <div class="slider-row" style="max-width: 280px;">
+            <label><span>iterations</span><span id="grover-iters-val">3</span></label>
+            <input type="range" id="grover-iters-slider" min="0" max="12" step="1" value="3" />
+          </div>
+          <p class="vec-readout" id="grover-optimal" style="margin: 10px 0;"></p>
+          <p class="vec-readout" id="grover-result" style="margin-bottom: 14px;"></p>
+          <div style="display:flex; gap: 24px; flex-wrap: wrap; align-items: flex-start;">
+            <div>
+              <p class="eyebrow" style="display:block; margin-bottom:6px;">Geometric picture</p>
+              <svg id="grover-geo-svg" width="200" height="200" viewBox="0 0 200 200"></svg>
+            </div>
+            <div style="flex:1; min-width:200px;">
+              <p class="eyebrow" style="display:block; margin-bottom:6px;">P(marked) after each iteration so far</p>
+              <div class="amp-bar-panel" id="grover-history" style="height: 110px;"></div>
+            </div>
+          </div>
+        </div>
+        <figcaption>Each iteration rotates the state vector by a fixed angle toward |marked⟩ — keep dragging the iteration slider past the optimum and watch P(marked) come back down. More iterations is not always better; this is the chapter's central, easy-to-miss subtlety.</figcaption>
+      </figure>
+
+      <span class="level-tag advanced">Advanced</span>
+      <h3>Why √N is provably the best possible</h3>
+      <p>Unlike Ch. 26's exponential gap, Grover's quadratic speedup isn't just the best anyone has found — it's been proven optimal: no quantum algorithm, of any design, can solve unstructured search in fewer than roughly √N oracle queries (the BBBT lower bound, 1997). This makes Grover's algorithm a rare case where you know, with mathematical certainty, that you're not leaving easy speedup on the table. It generalizes directly too: with t marked items out of N, the optimal iteration count becomes ≈(π/4)√(N/t) — search gets easier the more targets there are, exactly as you'd expect.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 28.3 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+def grover_iteration(amps, marked_idx):
+    amps = amps.copy()
+    amps[marked_idx] *= -1                    # oracle
+    mean = amps.mean()
+    return 2 * mean - amps                    # diffusion (reflect about the mean)
+
+N = 64
+marked = 37
+amps = np.full(N, 1/np.sqrt(N))
+
+optimal = round(np.pi/4 * np.sqrt(N))
+print(f"N={N}, optimal iterations = {optimal}")
+
+for k in range(optimal + 3):
+    p = amps[marked]**2
+    print(f"  iter {k}: P(marked) = {p:.4f}")
+    amps = grover_iteration(amps, marked)</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>Watch the probability climb toward the optimal iteration, then fall back down for the extra 3 iterations past it — the same overshoot Fig. 28.2 shows interactively.</figcaption>
+      </figure>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: Grover's algorithm</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Paper</span><a href="https://arxiv.org/abs/quant-ph/9605043" target="_blank" rel="noopener">Grover, "A fast quantum mechanical algorithm for database search" (1996)</a><span class="res-note">The original paper.</span></li>
+          <li><span class="res-type">Paper</span><a href="https://arxiv.org/abs/quant-ph/9701001" target="_blank" rel="noopener">Boyer, Brassard, Høyer, Tapp, "Tight bounds on quantum searching" (1996)</a><span class="res-note">The optimality proof referenced in the Advanced section.</span></li>
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §6.1</a><span class="res-note">The full geometric derivation this chapter's Fig. 28.2 visualizes.</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch28-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What two operations make up one Grover iteration?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>The phase oracle (flips the sign of the marked item) and the diffusion operator (reflects every amplitude about their average).</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch28-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Roughly how many iterations does Grover's algorithm need for N items, and how does that compare to classical search?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>≈(π/4)√N — a quadratic speedup over the classical ~N/2 average checks.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch28-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What happens if you run more iterations than the optimal count?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>P(marked) decreases again — the state vector keeps rotating past the marked item rather than stopping there. More iterations is not always better.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch28-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Is Grover's √N speedup the best anyone has found so far, or is it provably optimal?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Provably optimal — the BBHT lower bound proves no quantum algorithm can solve unstructured search faster than roughly √N queries, for any algorithm design whatsoever.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch28-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">How does the optimal iteration count change if there are t marked items instead of 1, out of N total?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>It becomes ≈(π/4)√(N/t) — fewer iterations are needed as the number of targets increases, since each iteration amplifies a larger combined target probability.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/ch28-grover.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>

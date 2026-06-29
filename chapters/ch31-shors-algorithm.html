@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 31 — Shor's Algorithm · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <a class="toc-chapter is-live" href="ch02-inner-outer-product.html">2. Inner & Outer Product</a>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <a class="toc-chapter is-live" href="ch04-unitary-hermitian.html">4. Unitary & Hermitian</a>
+      <a class="toc-chapter is-live" href="ch05-tensor-kronecker-product.html">5. Tensor / Kronecker Product</a>
+      <a class="toc-chapter is-live" href="ch06-commutation-relations.html">6. Commutation Relations</a>
+      <a class="toc-chapter is-live" href="ch07-postulates-measurement.html">7. Postulates & Measurement</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <a class="toc-chapter is-live" href="ch08-density-matrices.html">8. Density Matrices</a>
+      <a class="toc-chapter is-live" href="ch09-pure-mixed-states.html">9. Pure vs. Mixed States</a>
+      <a class="toc-chapter is-live" href="ch10-partial-trace.html">10. Partial Trace</a>
+      <a class="toc-chapter is-live" href="ch11-kraus-operators.html">11. Kraus Operators</a>
+      <a class="toc-chapter is-live" href="ch12-amplitude-phase-damping.html">12. Amplitude & Phase Damping</a>
+      <a class="toc-chapter is-live" href="ch13-amplifying-channel.html">13. Amplifying Channel</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <a class="toc-chapter is-live" href="ch14-quantum-teleportation.html">14. Quantum Teleportation</a>
+      <a class="toc-chapter is-live" href="ch15-locc.html">15. LOCC</a>
+      <a class="toc-chapter is-live" href="ch16-multipartite-entanglement.html">16. Multipartite Entanglement</a>
+      <a class="toc-chapter is-live" href="ch17-ghz-w-states.html">17. GHZ and W States</a>
+      <a class="toc-chapter is-live" href="ch18-cluster-graph-states.html">18. Cluster and Graph States</a>
+      <a class="toc-chapter is-live" href="ch19-dicke-states.html">19. Dicke States</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <a class="toc-chapter is-live" href="ch22-quantum-parallelism.html">22. Quantum Parallelism</a>
+      <a class="toc-chapter is-live" href="ch23-oracles.html">23. Oracles</a>
+      <a class="toc-chapter is-live" href="ch24-toffoli-gate.html">24. Toffoli Gate</a>
+      <a class="toc-chapter is-live" href="ch25-deutsch-algorithm.html">25. Deutsch's Algorithm</a>
+      <a class="toc-chapter is-live" href="ch26-deutsch-jozsa.html">26. Deutsch–Jozsa</a>
+      <a class="toc-chapter is-live" href="ch27-bernstein-vazirani.html">27. Bernstein–Vazirani</a>
+      <a class="toc-chapter is-live" href="ch28-grovers-algorithm.html">28. Grover's Algorithm</a>
+      <a class="toc-chapter is-live" href="ch29-quantum-fourier-transform.html">29. Quantum Fourier Transform</a>
+      <a class="toc-chapter is-live" href="ch30-quantum-phase-estimation.html">30. Quantum Phase Estimation</a>
+      <a class="toc-chapter is-live is-current" href="ch31-shors-algorithm.html">31. Shor's Algorithm</a>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part V · Chapter 31 · Final chapter of Part V</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Shor's Algorithm</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~24 min</span>
+        <span><b>Prerequisites</b> Ch. 23, Ch. 29–30</span>
+        <span><b>Tools</b> full factoring pipeline widget, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <span class="level-tag basic">Basic</span>
+      <p class="lede">This is the algorithm that made quantum computing famous outside physics departments: a way to factor large numbers exponentially faster than any known classical method — fast enough to break the RSA encryption protecting most of the internet, if a large enough quantum computer ever runs it. Every piece you need is already built. This chapter is purely assembly.</p>
+
+      <h2>The classical reduction: factoring becomes order-finding</h2>
+      <p>Shor's real insight wasn't quantum at all — it was noticing that factoring N reduces to a different problem: pick some a coprime to N, and find its <strong>order</strong> r, the smallest positive integer with aʳ ≡ 1 (mod N). Once you have an even r, simple classical arithmetic (Euclid's gcd algorithm) almost always hands you a real factor of N:</p>
+      <p style="text-align:center; font-size: 16px;">gcd(a^(r/2) − 1, N)  and  gcd(a^(r/2) + 1, N)</p>
+      <p>The only quantum step in the entire algorithm is finding r quickly. That's it. Everything else — the reduction above, and the final gcd computation — runs on an ordinary classical computer.</p>
+
+      <span class="level-tag intermediate">Intermediate</span>
+      <h2>Finding the order, quantum-mechanically</h2>
+      <p>Define the unitary U|x⟩ = |ax mod N⟩. Its eigenvalues are exactly e^(2πis/r) for integers s — which means Ch. 30's quantum phase estimation, applied to U, estimates s/r directly. A classical algorithm called <strong>continued fractions</strong> then recovers r from that fraction. This is the entire quantum contribution: QPE turns "find r by trial division" (exponentially slow) into "estimate a phase" (efficient).</p>
+
+      <figure class="qc-figure">
+        <div class="figure-label"><span>Fig. 31.1 — the whole algorithm, end to end</span><span>quantum step in the middle, classical on both ends</span></div>
+        <div class="figure-body circuit-diagram-wrap">
+          <svg width="460" height="150" viewBox="0 0 460 150">
+            <rect x="10" y="50" width="100" height="50" fill="none" stroke="#1c1a16" stroke-width="1.5" />
+            <text x="60" y="72" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#1c1a16">pick a,</text>
+            <text x="60" y="86" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#1c1a16">check gcd(a,N)=1</text>
+            <line x1="110" y1="75" x2="150" y2="75" stroke="#1c1a16" stroke-width="1.5" marker-end="url(#arrow31)" />
+
+            <rect x="150" y="40" width="120" height="70" fill="none" stroke="#a8702b" stroke-width="1.5" />
+            <text x="210" y="68" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#a8702b">QPE on</text>
+            <text x="210" y="82" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#a8702b">U|x⟩=|ax mod N⟩</text>
+            <text x="210" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#a8702b">(quantum step)</text>
+            <line x1="270" y1="75" x2="310" y2="75" stroke="#1c1a16" stroke-width="1.5" marker-end="url(#arrow31)" />
+
+            <rect x="310" y="50" width="100" height="50" fill="none" stroke="#1c1a16" stroke-width="1.5" />
+            <text x="360" y="72" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#1c1a16">continued</text>
+            <text x="360" y="86" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#1c1a16">fractions → r</text>
+            <defs><marker id="arrow31" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#1c1a16"/></marker></defs>
+
+            <text x="60" y="125" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6e6a60">classical</text>
+            <text x="360" y="125" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6e6a60">classical (gcd step happens after, too)</text>
+          </svg>
+        </div>
+        <figcaption>The quantum computer is doing exactly one thing in this whole pipeline: estimating a phase. Everything else is classical arithmetic you could run by hand for small enough numbers — which Fig. 31.2 actually does.</figcaption>
+      </figure>
+
+      <figure class="qc-figure" id="shor-widget">
+        <div class="figure-label"><span>Fig. 31.2 — the complete pipeline, live</span><span>pick N and a, watch every step</span></div>
+        <div class="figure-body">
+          <div class="toggle-row">
+            <label style="font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-faint); align-self: center;">N =</label>
+            <select id="shor-n-select" class="toggle-btn" style="padding: 7px 10px;">
+              <option value="15">15</option>
+              <option value="21">21</option>
+              <option value="35">35</option>
+            </select>
+            <label style="font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-faint); align-self: center;">a =</label>
+            <select id="shor-a-select" class="toggle-btn" style="padding: 7px 10px;"></select>
+          </div>
+          <p class="vec-readout" id="shor-order" style="margin-top: 12px;"></p>
+          <div class="amp-bar-panel" id="shor-sequence" style="margin: 12px 0;"></div>
+          <p class="vec-readout" id="shor-qpe" style="margin-top: 8px;"></p>
+          <p class="vec-readout" id="shor-result" style="margin-top: 8px; color: var(--signal);"></p>
+        </div>
+        <figcaption>The bar chart is the literal sequence aˣ mod N — watch it repeat every r steps (blue bars mark each repeat point). The QPE line runs an actual phase estimation independently and recovers the same r a completely different way, as a cross-check.</figcaption>
+      </figure>
+
+      <span class="level-tag advanced">Advanced</span>
+      <h3>Why this is exponentially faster than anything classical</h3>
+      <p>The best known classical factoring algorithm (the general number field sieve) takes time that grows roughly exponentially in the number of digits of N. Shor's algorithm's quantum step — QPE on modular exponentiation — takes time that grows only polynomially. For small numbers like 15, this difference is invisible; a laptop factors 15 instantly either way. For numbers with hundreds of digits — exactly the size used in real RSA encryption — the classical approach becomes intractable while Shor's algorithm, run on a sufficiently large and reliable quantum computer, would not. That gap, not the specific number 15, is the actual reason this algorithm matters: it's the single clearest example known of a quantum algorithm solving a practically important problem exponentially faster than any classical alternative.</p>
+      <p>Building a quantum computer with enough reliable qubits to factor a cryptographically meaningful number remains a hard, unsolved engineering problem — which is exactly the kind of noise and error this book's Part II (density matrices, damping channels) and the broader field of quantum error correction exist to fight.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 31.3 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+from math import gcd
+
+def find_order(a, N):
+    x = 1
+    for r in range(1, N + 1):
+        x = (x * a) % N
+        if x == 1:
+            return r
+    return -1
+
+def shor_classical_part(a, N):
+    r = find_order(a, N)
+    if r % 2 != 0:
+        return None, r
+    half = pow(a, r // 2, N)
+    p, q = gcd(half - 1, N), gcd(half + 1, N)
+    if p in (1, N) or q in (1, N):
+        return None, r
+    return (p, q), r
+
+for N, a in [(15, 7), (21, 2), (35, 4)]:
+    factors, r = shor_classical_part(a, N)
+    print(f"N={N}, a={a}: order r={r}, factors={factors}")</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>The classical half of Shor's algorithm, in full — pair this with Fig. 30.2's QPE code from the previous chapter and you have every piece of the real algorithm, minus only the controlled modular-exponentiation circuit itself.</figcaption>
+      </figure>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: Shor's algorithm</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §5.3</a><span class="res-note">The complete derivation, including the continued-fractions step this chapter only summarizes.</span></li>
+          <li><span class="res-type">Paper</span><a href="https://arxiv.org/abs/quant-ph/9508027" target="_blank" rel="noopener">Shor, "Polynomial-Time Algorithms for Prime Factorization..." (arXiv)</a><span class="res-note">The original 1995 paper.</span></li>
+          <li><span class="res-type">Video</span><a href="https://www.youtube.com/watch?v=lvTqbM5Dq4Q" target="_blank" rel="noopener">minutephysics — How Quantum Computers Break The Internet</a><span class="res-note">A fast, accessible overview of why this specific algorithm matters for cryptography.</span></li>
+        </ul>
+      </div>
+
+      <h2 style="margin-top: 3em;">End of Part V</h2>
+      <p>Quantum parallelism, oracles, and phase kickback (Ch. 22–23) built the foundation; Deutsch, Deutsch–Jozsa, and Bernstein–Vazirani (Ch. 25–27) showed the pattern at its simplest; Grover (Ch. 28) showed a different kind of speedup entirely; the QFT and phase estimation (Ch. 29–30) built the machinery this chapter just spent its entire length putting to use. There's no algorithm left in this book bigger than the one you just finished.</p>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch31-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What classical problem does factoring N reduce to?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Finding the order r of some a coprime to N — the smallest r with aʳ ≡ 1 (mod N).</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch31-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What is the only genuinely quantum step in Shor's algorithm?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Quantum phase estimation applied to the unitary U|x⟩=|ax mod N⟩, used to find the order r. The reduction to order-finding and the final gcd computation are both classical.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch31-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">For N=15, a=7, the order is r=4. What two factors does the gcd step recover?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>3 and 5 — gcd(7²−1, 15)=3 and gcd(7²+1, 15)=5, and indeed 15=3×5.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch31-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Why does Shor's algorithm fail (need a retry with a different a) if r turns out to be odd?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Because the factor-recovery step needs to compute a^(r/2), which requires r to be even. An odd r can't be halved into a meaningful integer exponent, so the algorithm restarts with a different choice of a.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch31-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Why is Shor's algorithm considered a much bigger deal than, say, factoring 15 would suggest?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Because the speedup is exponential — the gap between classical and quantum factoring time grows enormously as N gets larger, to the point of being intractable classically but efficient quantumly for RSA-sized numbers. The small examples in this chapter demonstrate the mechanism; the real-world stakes only appear at scale.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/algo-shared.js"></script>
+<script src="../js/ch31-shor.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>

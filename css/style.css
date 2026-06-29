@@ -700,3 +700,26 @@ table.qc-table td.mono { color: var(--signal); }
 .graph-edge.is-active { stroke: var(--signal); }
 .bipartition-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--rule); font-family: var(--font-mono); font-size: 13px; }
 .op-status.is-mid { background: var(--amber-bg); color: var(--amber); border-color: var(--amber); }
+
+/* ---------- Part V shared circuit-diagram & widget styles ---------- */
+.circuit-diagram-wrap { display: flex; justify-content: center; overflow-x: auto; padding: 8px 0; }
+.amp-bar-panel { display: flex; align-items: flex-end; gap: 4px; height: 160px; padding: 10px 8px 0; border-bottom: 1px solid var(--rule); overflow-x: auto; }
+.amp-bar-col { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; min-width: 34px; }
+.amp-bar-track { width: 22px; height: 130px; display: flex; align-items: flex-end; background: var(--paper); border: 1px solid var(--rule); position: relative; }
+.amp-bar-fill { width: 100%; background: var(--signal); transition: height 0.4s ease; }
+.amp-bar-fill.is-neg { background: var(--amber); }
+.amp-bar-label { font-family: var(--font-mono); font-size: 10px; color: var(--ink-faint); margin-top: 4px; }
+.truth-table-grid { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--ink); width: max-content; font-family: var(--font-mono); font-size: 12px; }
+.truth-table-grid .tt-cell { padding: 6px 10px; background: var(--paper-raised); text-align: center; }
+.truth-table-grid .tt-cell.is-header { background: var(--ink); color: var(--paper); font-size: 10px; text-transform: uppercase; }
+.truth-table-grid .tt-cell.is-toggle { cursor: pointer; color: var(--signal); font-weight: 600; }
+.truth-table-grid .tt-cell.is-toggle:hover { background: var(--signal-dim); }
+.toff-bit-btn {
+  width: 44px; height: 44px; font-family: var(--font-mono); font-size: 18px; font-weight: 600;
+  border: 1px solid var(--ink); background: var(--paper); color: var(--ink-faint); cursor: pointer; border-radius: var(--radius); margin-right: 8px;
+}
+.toff-bit-btn.is-active { background: var(--ink); color: var(--paper); }
+.qc-select {
+  font-family: var(--font-mono); font-size: 13px; padding: 6px 10px;
+  border: 1px solid var(--ink); background: var(--paper); color: var(--ink); border-radius: var(--radius);
+}
