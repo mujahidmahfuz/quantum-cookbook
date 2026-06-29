@@ -723,3 +723,61 @@ table.qc-table td.mono { color: var(--signal); }
   font-family: var(--font-mono); font-size: 13px; padding: 6px 10px;
   border: 1px solid var(--ink); background: var(--paper); color: var(--ink); border-radius: var(--radius);
 }
+
+/* ---------- Update badge + About/Updates pages ---------- */
+.site-nav a.has-update { position: relative; }
+.site-nav a.has-update::after {
+  content: "";
+  position: absolute;
+  top: -2px; right: -8px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+.remember-box {
+  max-width: 480px;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  padding: 18px 20px;
+  margin: 20px 0;
+}
+.remember-box input[type="text"] {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 15px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 8px 10px;
+  margin: 8px 0 12px;
+}
+.changelog-entry {
+  border-left: 3px solid var(--rule);
+  padding: 4px 0 16px 16px;
+  margin-bottom: 16px;
+  position: relative;
+}
+.changelog-entry.is-new { border-left-color: var(--amber); }
+.changelog-entry .cl-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--amber-bg);
+  color: var(--amber);
+  padding: 2px 7px;
+  border-radius: var(--radius);
+  margin-left: 8px;
+}
+.changelog-entry h3 { margin: 0 0 4px; font-size: 18px; }
+.changelog-entry .cl-date { font-family: var(--font-mono); font-size: 12px; color: var(--ink-faint); margin-bottom: 8px; display: block; }
+.contact-card {
+  display: flex; flex-direction: column; gap: 6px;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  padding: 16px 20px;
+  max-width: 420px;
+  margin: 16px 0;
+}
+.contact-card a { font-family: var(--font-mono); font-size: 14px; }

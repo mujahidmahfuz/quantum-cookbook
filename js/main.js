@@ -1,4 +1,23 @@
+/* ===========================================================
+   Quantum Cookbook — shared site behavior
+   - SM-2 spaced repetition, stored in localStorage (zero backend)
+   - Quiz card reveal/rate wiring
+   - Resource-link panel toggles
+   - Update-notification badge (purely local — see updates.html)
+   =========================================================== */
+
 const QC_STORE_KEY = "qc_cards_v1";
+const QC_LATEST_VERSION = 4; // bump this whenever updates.html gets a new changelog entry
+
+function qcCheckUpdateBadge() {
+  let lastSeen = 0;
+  try { lastSeen = parseInt(localStorage.getItem("qc_last_seen_version"), 10) || 0; } catch (e) {}
+  if (lastSeen < QC_LATEST_VERSION) {
+    document.querySelectorAll('a[href$="updates.html"]').forEach((link) => {
+      link.classList.add("has-update");
+    });
+  }
+}
 
 function qcLoadCards() {
   try {
@@ -16,6 +35,7 @@ function qcSaveCards(cards) {
   }
 }
 
+// SM-2: quality 0-5. We expose three buttons mapped to 2 (hard), 4 (good), 5 (easy).
 function sm2(card, quality) {
   const now = Date.now();
   let { interval = 0, ease = 2.5, reps = 0 } = card;
@@ -121,4 +141,5 @@ document.addEventListener("DOMContentLoaded", () => {
   qcWireQuizCards();
   qcWireResourcePanels();
   qcWireReviewFab();
+  qcCheckUpdateBadge();
 });

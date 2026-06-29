@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>About · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="index.html">Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="index.html#toc">Contents</a>
+      <a href="about.html">About</a>
+      <a href="updates.html">Updates</a>
+    </nav>
+  </div>
+</header>
+
+<main class="content" style="max-width: 760px; margin: 0 auto;">
+  <p class="eyebrow">About</p>
+  <h1 style="font-size: 34px; margin: 8px 0 20px;">What this is, and how to actually use it</h1>
+
+  <p class="lede">Quantum Cookbook turns lecture notes, Nielsen &amp; Chuang, and a handful of other sources into something you can drag, run, and get quizzed on — instead of just read. Every gate, circuit, and channel on this site is computed live, not animated; if you change a number, the math actually recomputes.</p>
+
+  <h2>Use this as a supplement, not a substitute</h2>
+  <p>This site is built to sit <em>alongside</em> a real course, a real professor, and a real textbook — not to replace any of them. It's the place to come build intuition for an idea your lecture just covered, check your own derivation against a working widget, or get a different angle on something that didn't click the first time. It is not a substitute for actually attending lectures, doing the problem sets, or reading the source material it's built from. Treat it the way you'd treat a good study partner: useful constantly, authoritative never.</p>
+
+  <h2>How it's built</h2>
+  <p>Every interactive widget on this site is verified against known results before it ships — the same matrix math you'd do by hand, just run for you and drawn on screen. Nothing here was generated and trusted blindly; if a widget claims a circuit produces a particular state, that claim was checked numerically first. The site itself is free, ad-free, and has no backend — everything runs directly in your browser, including the optional update-tracking on the <a href="updates.html">Updates</a> page, which never leaves your device.</p>
+
+  <p>There's also a standalone <a href="composer.html">Quantum Composer</a> — a free-standing 4-qubit circuit builder with live OpenQASM, a Q-sphere, and a gate-matrix inspector, separate from the chapter-by-chapter book. Chapter 3 links to it directly when it first comes up; it's also always reachable from here.</p>
+
+  <h2>Who built it</h2>
+  <p>Quantum Cookbook is built and maintained by Mujahid Mahfuz, a graduate researcher working in quantum information.</p>
+
+  <div class="contact-card">
+    <strong style="font-family: var(--font-body); font-size: 15px;">Get in touch</strong>
+    <a href="mailto:mujahid168216@gmail.com">mujahid168216@gmail.com</a>
+    <a href="mailto:mujahidmahfuz@proton.me">mujahidmahfuz@proton.me</a>
+    <a href="mailto:mujahidmahfuz@tutamail.com">mujahidmahfuz@tutamail.com</a>
+  </div>
+
+  <p style="font-size: 13.5px; color: var(--ink-faint);">Found a bug, a wrong derivation, or a typo? Email any of the addresses above — corrections to the actual physics and math are taken seriously and fixed directly.</p>
+</main>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free. Created by Mujahid Mahfuz.</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
