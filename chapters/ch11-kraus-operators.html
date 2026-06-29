@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 11 — Kraus Operators · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <a class="toc-chapter is-live" href="ch02-inner-outer-product.html">2. Inner & Outer Product</a>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <a class="toc-chapter is-live" href="ch04-unitary-hermitian.html">4. Unitary & Hermitian</a>
+      <a class="toc-chapter is-live" href="ch05-tensor-kronecker-product.html">5. Tensor / Kronecker Product</a>
+      <a class="toc-chapter is-live" href="ch06-commutation-relations.html">6. Commutation Relations</a>
+      <a class="toc-chapter is-live" href="ch07-postulates-measurement.html">7. Postulates & Measurement</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <a class="toc-chapter is-live" href="ch08-density-matrices.html">8. Density Matrices</a>
+      <a class="toc-chapter is-live" href="ch09-pure-mixed-states.html">9. Pure vs. Mixed States</a>
+      <a class="toc-chapter is-live" href="ch10-partial-trace.html">10. Partial Trace</a>
+      <a class="toc-chapter is-live is-current" href="ch11-kraus-operators.html">11. Kraus Operators</a>
+      <a class="toc-chapter is-live" href="ch12-amplitude-phase-damping.html">12. Amplitude & Phase Damping</a>
+      <a class="toc-chapter is-live" href="ch13-amplifying-channel.html">13. Amplifying Channel</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <span class="toc-chapter is-locked">14–19. Teleportation → GHZ/W → Dicke</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <span class="toc-chapter is-locked">22–31. Parallelism → Shor</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part II · Chapter 11</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Kraus Operators</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~20 min</span>
+        <span><b>Prerequisites</b> Ch. 4, Ch. 8–10</span>
+        <span><b>Tools</b> channel applicator, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <span class="level-tag basic">Basic</span>
+      <p class="lede">Ch. 4's evolution postulate said a closed system evolves by a single unitary U. But no real qubit is ever truly closed — it's always coupled, at least a little, to an environment you don't control. Kraus operators are the general tool for describing what evolution looks like once you stop pretending the environment isn't there.</p>
+
+      <h2>The general quantum operation</h2>
+      <p>A <strong>quantum channel</strong> (or quantum operation) maps an input ρ to an output ρ′ via a set of matrices {Kᵢ}, called Kraus operators:</p>
+      <p style="text-align:center; font-size: 18px;">ρ′ = Σᵢ Kᵢ ρ Kᵢ†</p>
+      <p>For this to be a legitimate, probability-preserving operation, the Kᵢ must satisfy the <strong>completeness relation</strong>:</p>
+      <p style="text-align:center; font-size: 18px;">Σᵢ Kᵢ†Kᵢ = I</p>
+
+      <figure class="qc-figure">
+        <div class="figure-label"><span>Fig. 11.1 — where Kraus operators come from</span><span>system + environment, then forget the environment</span></div>
+        <div class="figure-body static-diagram-wrap">
+          <svg width="420" height="140" viewBox="0 0 420 140">
+            <rect x="20" y="40" width="90" height="60" fill="none" stroke="#2748c9" stroke-width="1.5" />
+            <text x="65" y="75" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2748c9">qubit ρ</text>
+            <rect x="130" y="20" width="90" height="100" fill="none" stroke="#a39d8e" stroke-width="1.5" stroke-dasharray="4 3" />
+            <text x="175" y="75" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#6e6a60">environment</text>
+            <line x1="110" y1="70" x2="130" y2="70" stroke="#a39d8e" stroke-width="1.2" />
+            <rect x="230" y="40" width="60" height="60" fill="none" stroke="#1c1a16" stroke-width="1.5" />
+            <text x="260" y="75" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#1c1a16">U</text>
+            <line x1="220" y1="70" x2="230" y2="70" stroke="#1c1a16" stroke-width="1.2" />
+            <line x1="290" y1="70" x2="340" y2="70" stroke="#1c1a16" stroke-width="1.5" marker-end="url(#arrow11)" />
+            <defs><marker id="arrow11" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#1c1a16"/></marker></defs>
+            <text x="345" y="60" font-family="JetBrains Mono, monospace" font-size="11" fill="#a8702b">trace out</text>
+            <text x="345" y="75" font-family="JetBrains Mono, monospace" font-size="11" fill="#a8702b">environment</text>
+            <text x="345" y="90" font-family="JetBrains Mono, monospace" font-size="11" fill="#a8702b">(Ch. 10)</text>
+          </svg>
+        </div>
+        <figcaption>This is the real origin story: let the qubit and its environment interact via one big unitary U (Ch. 4 still applies — to the <em>whole</em> system), then use Ch. 10's partial trace to throw away the environment. What's left over, from the qubit's point of view, is exactly the Kraus-operator form above — the Kᵢ are literally pieces of U.</figcaption>
+      </figure>
+
+      <span class="level-tag intermediate">Intermediate</span>
+      <figure class="qc-figure" id="kraus-widget">
+        <div class="figure-label"><span>Fig. 11.2 — pick a channel, watch it act on |+⟩</span><span>checks completeness live</span></div>
+        <div class="figure-body">
+          <div class="toggle-row">
+            <button class="kraus-channel-btn toggle-btn" data-channel="identity">Identity</button>
+            <button class="kraus-channel-btn toggle-btn is-active" data-channel="bitflip">Bit-flip</button>
+            <button class="kraus-channel-btn toggle-btn" data-channel="phaseflip">Phase-flip</button>
+            <button class="kraus-channel-btn toggle-btn" data-channel="depolarizing">Depolarizing</button>
+          </div>
+          <div class="slider-row" style="max-width: 320px;">
+            <label><span>p (error probability)</span><span id="kraus-p-val">0.3</span></label>
+            <input type="range" id="kraus-p-slider" min="0" max="1" step="0.05" value="0.3" />
+          </div>
+          <p class="vec-readout" id="kraus-count" style="margin-top: 10px;"></p>
+          <div class="op-status-row"><span class="op-status" id="kraus-tag">Completeness: —</span></div>
+          <div class="op-output-grid">
+            <div><h4>Input ρ (always |+⟩)</h4><div id="kraus-input"></div></div>
+            <div><h4>Output ρ</h4><div id="kraus-output"></div></div>
+          </div>
+        </div>
+        <figcaption>Bit-flip has 2 Kraus operators; depolarizing has 4. All four presets pass completeness — try the math in Fig. 11.3's code cell with your own (possibly broken) Kraus set to see what failing the check actually looks like.</figcaption>
+      </figure>
+
+      <h3>Special cases you already know</h3>
+      <ul>
+        <li><strong>One Kraus operator, K₀=U:</strong> the completeness relation becomes U†U=I — exactly Ch. 4's unitary evolution. Closed-system evolution is the special case of a quantum channel with no actual noise.</li>
+        <li><strong>Projective measurement (Ch. 7):</strong> the Kraus operators are the projectors |φᵢ⟩⟨φᵢ|, and ΣKᵢ†Kᵢ=Σ|φᵢ⟩⟨φᵢ|=I is exactly the completeness of an orthonormal basis from Ch. 2.</li>
+      </ul>
+
+      <span class="level-tag advanced">Advanced</span>
+      <h3>The same channel, different Kraus operators</h3>
+      <p>Just like Ch. 8's "different ensemble, same ρ" surprise, a single channel can be written with more than one valid set of Kraus operators — any set related by a unitary "mixing" of the original Kᵢ describes the identical physical channel. The completeness relation is the only hard requirement; everything else is a choice of description. This is why you'll sometimes see the same depolarizing channel written with 4 operators in one paper and a different-looking 4 in another — both are correct, and both pass the same completeness check Fig. 11.2 runs.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 11.3 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+I = np.eye(2)
+X = np.array([[0, 1], [1, 0]])
+
+def apply_channel(Ks, rho):
+    return sum(K @ rho @ K.conj().T for K in Ks)
+
+def check_completeness(Ks):
+    total = sum(K.conj().T @ K for K in Ks)
+    return np.allclose(total, np.eye(2)), total
+
+p = 0.3
+K0 = np.sqrt(1 - p) * I
+K1 = np.sqrt(p) * X
+ok, total = check_completeness([K0, K1])
+print("Bit-flip completeness:", ok)
+
+plus = np.array([[1], [1]]) / np.sqrt(2)
+rho = plus @ plus.conj().T
+rho_out = apply_channel([K0, K1], rho)
+print("rho_out =\n", rho_out)
+
+# Now break it on purpose: forget the sqrt(1-p) factor
+K0_broken = I  # should have been sqrt(1-p) * I
+ok_broken, total_broken = check_completeness([K0_broken, K1])
+print("\nBroken version completeness:", ok_broken, " (correctly fails)")
+print("Sum K_i^dagger K_i =\n", total_broken)</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>The "broken" example is deliberate — it's worth seeing what a failed completeness check actually looks like numerically, not just being told the rule exists.</figcaption>
+      </figure>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: Kraus operators</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §8.2</a><span class="res-note">The operator-sum representation this entire chapter is built from, including the system+environment derivation in Fig. 11.1.</span></li>
+          <li><span class="res-type">Article</span><a href="https://en.wikipedia.org/wiki/Quantum_operation" target="_blank" rel="noopener">Wikipedia — Quantum operation</a><span class="res-note">General reference for the Kraus / operator-sum formalism.</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch11-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What's the completeness relation Kraus operators must satisfy, and what does it guarantee?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>ΣᵢKᵢ†Kᵢ = I. It guarantees the channel preserves trace — i.e. it takes a valid (Tr=1) density matrix to another valid density matrix, so probabilities still add up to 1 after the channel acts.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch11-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What does a Kraus-operator channel with exactly one operator, K₀=U, reduce to?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Ordinary unitary evolution from Ch. 4 — ρ′ = UρU†, with the completeness relation becoming U†U=I, exactly the unitarity condition.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch11-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Conceptually, where do Kraus operators actually come from?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Let the system interact with its environment via one big unitary (Ch. 4 applies to the combined system), then use the partial trace (Ch. 10) to discard the environment. The Kraus operators are the pieces of that unitary left behind from the system's point of view.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch11-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">In Fig. 11.2, why does the bit-flip channel need exactly the factors √(1-p) and √p, rather than just 1-p and p?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Because completeness requires K₀†K₀ + K₁†K₁ = I, and K†K involves squaring the scalar factor. (1-p)I + pX†X = (1-p)I+pI = I works out, but only if the scalars in front of K₀ and K₁ are the square roots √(1-p) and √p in the first place.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch11-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">How do projective measurements (Ch. 7) fit into the Kraus-operator framework?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>They're a special case where the Kraus operators are the projectors |φᵢ⟩⟨φᵢ| onto each possible outcome — completeness ΣKᵢ†Kᵢ=I is then exactly the orthonormal-basis completeness relation from Ch. 2.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/ch11-kraus.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>

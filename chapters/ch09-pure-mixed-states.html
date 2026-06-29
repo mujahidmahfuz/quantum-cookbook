@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 9 — Pure vs. Mixed States · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <a class="toc-chapter is-live" href="ch02-inner-outer-product.html">2. Inner & Outer Product</a>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <a class="toc-chapter is-live" href="ch04-unitary-hermitian.html">4. Unitary & Hermitian</a>
+      <a class="toc-chapter is-live" href="ch05-tensor-kronecker-product.html">5. Tensor / Kronecker Product</a>
+      <a class="toc-chapter is-live" href="ch06-commutation-relations.html">6. Commutation Relations</a>
+      <a class="toc-chapter is-live" href="ch07-postulates-measurement.html">7. Postulates & Measurement</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <a class="toc-chapter is-live" href="ch08-density-matrices.html">8. Density Matrices</a>
+      <a class="toc-chapter is-live is-current" href="ch09-pure-mixed-states.html">9. Pure vs. Mixed States</a>
+      <a class="toc-chapter is-live" href="ch10-partial-trace.html">10. Partial Trace</a>
+      <a class="toc-chapter is-live" href="ch11-kraus-operators.html">11. Kraus Operators</a>
+      <a class="toc-chapter is-live" href="ch12-amplitude-phase-damping.html">12. Amplitude & Phase Damping</a>
+      <a class="toc-chapter is-live" href="ch13-amplifying-channel.html">13. Amplifying Channel</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <span class="toc-chapter is-locked">14–19. Teleportation → GHZ/W → Dicke</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <span class="toc-chapter is-locked">22–31. Parallelism → Shor</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part II · Chapter 9</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Pure vs. Mixed States</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~16 min</span>
+        <span><b>Prerequisites</b> Ch. 3, Ch. 8</span>
+        <span><b>Tools</b> purity disc, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <span class="level-tag basic">Basic</span>
+      <p class="lede">Ch. 3's Bloch sphere only ever showed you the <em>surface</em>. That wasn't a simplification for beginners — it was the surface specifically because every state on it was pure. Density matrices unlock the rest of the ball.</p>
+
+      <h2>The purity test</h2>
+      <p>One number tells you everything: Tr(ρ²).</p>
+      <ul>
+        <li><strong>Tr(ρ²) = 1</strong> → pure state. Sits exactly on the Bloch sphere's surface.</li>
+        <li><strong>Tr(ρ²) &lt; 1</strong> → mixed state. Sits somewhere inside the ball — the smaller Tr(ρ²) gets, the closer to dead center.</li>
+        <li><strong>Tr(ρ²) = 1/2</strong> (the minimum, for a qubit) → the <strong>maximally mixed state</strong>, I/2, sitting exactly at the center. No direction is preferred at all — it's the quantum equivalent of a fair, unbiased coin.</li>
+      </ul>
+
+      <figure class="qc-figure" id="purity-widget">
+        <div class="figure-label"><span>Fig. 9.1 — drag the point anywhere inside the disc</span><span>Tr(ρ²) live</span></div>
+        <div class="figure-body">
+          <div class="vec-plane-wrap"><svg id="purity-svg" width="200" height="200" viewBox="0 0 200 200"></svg></div>
+          <div class="slider-row" style="max-width: 280px; margin: 14px auto 0;">
+            <label><span>mixedness</span><span id="mixedness-val">0</span></label>
+            <input type="range" id="mixedness-slider" min="0" max="1" step="0.02" value="0" />
+          </div>
+          <div class="vec-readout" id="purity-readout" style="text-align:center; margin: 10px auto 0; max-width: 360px;"></div>
+        </div>
+        <figcaption>This is the exact same θ-angle picture from Ch. 3's Fig. 3.1 — now generalized so the point can sit anywhere inside the disc, not just on the boundary. Drag straight to the center: that's I/2.</figcaption>
+      </figure>
+
+      <span class="level-tag intermediate">Intermediate</span>
+      <h2>Superposition is not the same thing as a mixture</h2>
+      <p>This is the single most common mix-up at this stage, so it's worth stating bluntly: |+⟩ = (|0⟩+|1⟩)/√2 is a <strong>pure</strong> state — it sits right on the equator, Tr(ρ²)=1. A 50/50 classical mixture of |0⟩ and |1⟩ is a genuinely <strong>different, mixed</strong> state — I/2, dead center, Tr(ρ²)=0.5. Both "give 50/50 outcomes when measured in the Z basis," which is exactly why it's tempting to conflate them. But measure in the <em>X</em> basis and the difference is obvious: |+⟩ gives a certain "+" outcome every time (Ch. 7), while I/2 gives 50/50 no matter which basis you measure in. Superposition is coherent and basis-dependent; a mixture is incoherent classical uncertainty, the same in every basis.</p>
+
+      <span class="level-tag advanced">Advanced</span>
+      <h3>Why Tr(ρ²) is the right quantity (not just a convenient one)</h3>
+      <p>Writing ρ in terms of the Bloch vector r = (rₓ,r_y,r_z), with |r| ≤ 1, gives the clean closed form Tr(ρ²) = (1+|r|²)/2 — which is exactly what Fig. 9.1 computes as you drag. This isn't a coincidence of notation: Tr(ρ²) is one specific case of a whole family of quantities called Rényi entropies that measure "how mixed" a state is, and it has a special practical virtue over alternatives like von Neumann entropy (Ch. 15): it's just a trace of a matrix product, with no logarithm and no eigendecomposition required, which is why it's usually the first thing people check.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 9.2 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+def purity(rho):
+    return np.trace(rho @ rho).real
+
+plus = np.array([[1], [1]]) / np.sqrt(2)
+rho_plus = plus @ plus.conj().T
+print("rho_plus purity:", purity(rho_plus), " (pure)")
+
+rho_mixed = 0.5 * np.array([[1, 0], [0, 0]]) + 0.5 * np.array([[0, 0], [0, 1]])
+print("rho_mixed (I/2) purity:", purity(rho_mixed), " (maximally mixed)")
+
+# Both give 50/50 in the Z basis...
+Z = np.array([[1, 0], [0, -1]])
+print("\n<Z> for both:", np.trace(rho_plus @ Z).real, np.trace(rho_mixed @ Z).real)
+
+# ...but only |+> gives a certain answer in the X basis
+X = np.array([[0, 1], [1, 0]])
+print("<X> for both:", np.trace(rho_plus @ X).real, np.trace(rho_mixed @ X).real)</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>⟨X⟩ = 1 for |+⟩ but ⟨X⟩ = 0 for I/2 — the exact numerical version of the "not the same thing" claim above.</figcaption>
+      </figure>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: pure vs. mixed states</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Article</span><a href="https://en.wikipedia.org/wiki/Density_matrix#Pure_and_mixed_states" target="_blank" rel="noopener">Wikipedia — Density matrix, Pure and mixed states</a><span class="res-note">Confirms the Tr(ρ²)=1 (pure) vs. &lt;1 (mixed) criterion used throughout this chapter.</span></li>
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §2.4.2</a><span class="res-note">Distinguishing mixed states formally, including the ensemble ambiguity from Ch. 8.</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch09-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What value of Tr(ρ²) signals a pure state, and what value signals the maximally mixed qubit state?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>1 for pure; 0.5 for maximally mixed (the minimum possible for a single qubit).</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch09-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">|+⟩ and I/2 both give 50/50 outcomes when measured in the Z basis. How do you tell them apart?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Measure in the X basis instead. |+⟩ gives a certain "+" outcome every time; I/2 still gives 50/50, since it has no preferred direction in any basis.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch09-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Where does a mixed state sit relative to the Bloch sphere's surface?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Strictly inside it — the lower the purity, the closer to the exact center, which is the maximally mixed state I/2.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch09-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">If |r| = 0.6 for some qubit's Bloch vector, what is Tr(ρ²)?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>(1 + 0.36)/2 = 0.68 — using Tr(ρ²) = (1+|r|²)/2.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch09-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">In one sentence, what's the conceptual difference between superposition and a classical mixture?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Superposition is coherent and basis-dependent — a specific pure state with a definite outcome in some basis; a mixture is incoherent classical uncertainty about which state you actually have, equally "spread out" in every basis.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/ch09-purity.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>

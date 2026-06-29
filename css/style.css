@@ -671,3 +671,22 @@ table.qc-table td.mono { color: var(--signal); }
 .meas-hist-label { font-family: var(--font-mono); font-size: 13px; color: var(--ink); margin-top: 8px; }
 .meas-hist-val { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); margin-top: 2px; }
 .meas-readout { font-family: var(--font-mono); font-size: 13px; color: var(--signal); background: var(--paper); border: 1px solid var(--rule); padding: 10px 14px; margin-top: 10px; }
+
+/* ---------- Part II shared widget styles ---------- */
+.toggle-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.toggle-btn {
+  font-family: var(--font-mono); font-size: 12.5px; border: 1px solid var(--ink); background: var(--paper);
+  color: var(--ink); padding: 7px 14px; cursor: pointer; border-radius: var(--radius);
+}
+.toggle-btn.is-active { background: var(--ink); color: var(--paper); }
+.purity-gauge-wrap { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
+.purity-gauge-track { flex: 1; height: 10px; background: var(--rule); border-radius: 6px; overflow: hidden; }
+.purity-gauge-fill { height: 100%; background: var(--signal); transition: width 0.3s ease; }
+.static-diagram-wrap { display: flex; justify-content: center; padding: 10px 0; }
+.level-tag {
+  display: inline-block; font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase;
+  letter-spacing: 0.05em; padding: 3px 9px; border-radius: var(--radius); margin-bottom: 8px;
+}
+.level-tag.basic { background: var(--green-bg); color: var(--green); }
+.level-tag.intermediate { background: var(--amber-bg); color: var(--amber); }
+.level-tag.advanced { background: #ece3f5; color: #7a3fa6; }

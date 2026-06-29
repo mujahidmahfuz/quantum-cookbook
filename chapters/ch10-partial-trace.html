@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 10 — Partial Trace · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <a class="toc-chapter is-live" href="ch02-inner-outer-product.html">2. Inner & Outer Product</a>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <a class="toc-chapter is-live" href="ch04-unitary-hermitian.html">4. Unitary & Hermitian</a>
+      <a class="toc-chapter is-live" href="ch05-tensor-kronecker-product.html">5. Tensor / Kronecker Product</a>
+      <a class="toc-chapter is-live" href="ch06-commutation-relations.html">6. Commutation Relations</a>
+      <a class="toc-chapter is-live" href="ch07-postulates-measurement.html">7. Postulates & Measurement</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <a class="toc-chapter is-live" href="ch08-density-matrices.html">8. Density Matrices</a>
+      <a class="toc-chapter is-live" href="ch09-pure-mixed-states.html">9. Pure vs. Mixed States</a>
+      <a class="toc-chapter is-live is-current" href="ch10-partial-trace.html">10. Partial Trace</a>
+      <a class="toc-chapter is-live" href="ch11-kraus-operators.html">11. Kraus Operators</a>
+      <a class="toc-chapter is-live" href="ch12-amplitude-phase-damping.html">12. Amplitude & Phase Damping</a>
+      <a class="toc-chapter is-live" href="ch13-amplifying-channel.html">13. Amplifying Channel</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <span class="toc-chapter is-locked">14–19. Teleportation → GHZ/W → Dicke</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <span class="toc-chapter is-locked">22–31. Parallelism → Shor</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part II · Chapter 10</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Partial Trace</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~18 min</span>
+        <span><b>Prerequisites</b> Ch. 5, Ch. 8–9</span>
+        <span><b>Tools</b> entanglement/mixedness slider, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <span class="level-tag basic">Basic</span>
+      <p class="lede">Here's a question Ch. 8–9 left open: if two qubits are entangled, what's the state of just <em>one</em> of them, on its own? The answer turns out to be one of the most important and surprising facts in this whole book: even when the full 2-qubit state is perfectly pure, one qubit by itself is usually mixed.</p>
+
+      <h2>What the partial trace does</h2>
+      <p>Given a joint density matrix ρ_AB for two systems, the partial trace "sums away" everything about system B, leaving exactly the reduced density matrix that describes A alone:</p>
+      <p style="text-align:center; font-size: 18px;">ρ_A = Tr_B(ρ_AB)</p>
+      <p>Concretely, for two qubits using the index = 2q₁+q₀ convention from Ch. 5, tracing out q₀ means: (ρ_A)ᵢⱼ = Σₖ (ρ_AB)[2i+k][2j+k] for k=0,1 — pairing up entries that agree on q₁'s index and summing over q₀'s.</p>
+
+      <h2>The showcase example: the Bell state</h2>
+      <figure class="qc-figure" id="pt-widget">
+        <div class="figure-label"><span>Fig. 10.1 — drag t from 0° (product) to 45° (max entangled)</span><span>watch ρ_A's purity</span></div>
+        <div class="figure-body">
+          <div class="slider-row" style="max-width: 360px; margin: 0 auto 14px;">
+            <label><span>t (entanglement amount)</span><span id="pt-t-val">0°</span></label>
+            <input type="range" id="pt-t-slider" min="0" max="45" step="1" value="0" />
+          </div>
+          <div id="pt-ket" class="vec-readout" style="text-align:center; max-width: 380px; margin: 0 auto;"></div>
+          <div id="pt-rho" class="vec-readout" style="text-align:center; max-width: 460px; margin: 10px auto 0; font-size: 12px;"></div>
+          <div class="purity-gauge-wrap" style="max-width: 460px; margin: 14px auto 0;">
+            <span class="vec-readout" id="pt-purity" style="flex-shrink:0; font-size:12px;"></span>
+            <div class="purity-gauge-track"><div class="purity-gauge-fill" id="pt-fill"></div></div>
+          </div>
+        </div>
+        <figcaption>|ψ⟩ itself is always pure — it's a single ket, by construction. But its <em>subsystem</em> ρ_A goes from pure (t=0°, an ordinary product state) all the way to maximally mixed (t=45°, the actual Bell state) as entanglement increases. This is the deepest reason mixed states matter at all in quantum computing.</figcaption>
+      </figure>
+
+      <span class="level-tag intermediate">Intermediate</span>
+      <h3>Why this makes sense</h3>
+      <p>At t=45°, |ψ⟩ = (|00⟩+|11⟩)/√2: knowing q₁'s value tells you q₀'s value with certainty, and vice versa — they're perfectly correlated. But q₁ <em>by itself</em>, with no access to q₀ at all, can't see any of that correlation. All that's left, looking at q₁ alone, is "50% chance of 0, 50% chance of 1, with absolutely no further structure" — which is precisely the maximally mixed state I/2. The information wasn't lost; it just isn't <em>local</em> to either qubit alone. It only exists in the correlation between them — which is, in fact, one workable definition of what entanglement even is.</p>
+
+      <span class="level-tag advanced">Advanced</span>
+      <h3>This is an "improper" mixture, and that distinction matters</h3>
+      <p>Ch. 8's Advanced section mentioned proper vs. improper mixtures. Here's the improper case in the wild: ρ_A = I/2 from the Bell state isn't "secretly" |0⟩ or "secretly" |1⟩ waiting to be revealed — there's no hidden fact at all, because the global state is genuinely pure and the mixedness is purely an artifact of ignoring q₀. Contrast this with Ch. 8's lab-equipment example, where ρ = 0.95|0⟩⟨0|+0.05|1⟩⟨1| really does correspond to a definite (if unknown to you) state each time. Both give identical-looking density matrices and identical measurement statistics — but only the partial-trace case is inseparable from a fact about a larger system you don't have access to.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 10.2 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+# Bell state |00> + |11>, normalized
+psi = np.array([1, 0, 0, 1]) / np.sqrt(2)
+rho_AB = np.outer(psi, psi.conj())
+
+def partial_trace_out_q0(rho):
+    # index = 2*q1 + q0; trace out q0 by summing over k=0,1
+    rho_A = np.zeros((2, 2), dtype=complex)
+    for i in range(2):
+        for j in range(2):
+            rho_A[i, j] = rho[2*i + 0, 2*j + 0] + rho[2*i + 1, 2*j + 1]
+    return rho_A
+
+rho_A = partial_trace_out_q0(rho_AB)
+print("rho_A =\n", rho_A)
+print("Tr(rho_A^2) =", np.trace(rho_A @ rho_A).real, " (0.5 -> maximally mixed)")
+
+# Compare: a plain product state |00>, no entanglement
+psi_product = np.array([1, 0, 0, 0])
+rho_AB_product = np.outer(psi_product, psi_product.conj())
+rho_A_product = partial_trace_out_q0(rho_AB_product)
+print("\nProduct state rho_A purity:", np.trace(rho_A_product @ rho_A_product).real, " (1.0 -> still pure)")</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>Same partial-trace function, two very different outcomes — exactly the contrast Fig. 10.1's slider walks through continuously.</figcaption>
+      </figure>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: partial trace</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §2.4.3</a><span class="res-note">The formal definition and properties of the partial trace operation.</span></li>
+          <li><span class="res-type">Article</span><a href="https://en.wikipedia.org/wiki/Partial_trace" target="_blank" rel="noopener">Wikipedia — Partial trace</a><span class="res-note">General n-dimensional definition beyond the 2-qubit case covered here.</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch10-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What does Tr_B(ρ_AB) compute?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>The reduced density matrix ρ_A — the correct description of subsystem A alone, with all information about B summed away.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch10-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">For the Bell state (|00⟩+|11⟩)/√2, what is ρ_A?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>I/2, the maximally mixed state — even though the full 2-qubit state is perfectly pure.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch10-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">If ρ_AB describes an unentangled product state, what can you say about ρ_A?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>It's pure — Fig. 10.1 at t=0° shows exactly this. No entanglement means no information is hidden in cross-qubit correlations, so tracing out the other qubit loses nothing.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch10-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Why does tracing out an entangled partner make the remaining qubit's state mixed, if no information was actually destroyed?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>The information isn't destroyed — it was never local to either qubit. It exists only in the correlation between them, so a description that looks at only one qubit necessarily can't see it, leaving an honestly mixed local description.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch10-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What's the difference between the "improper" mixture from a partial trace and the "proper" mixture from imperfect state preparation (Ch. 8)?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>In the proper mixture, there's a real, definite (if unknown to you) state each time. In the improper mixture from a partial trace, there's no such hidden fact — the global state really is pure, and the local mixedness comes entirely from ignoring an entangled partner. Both produce identical density matrices and statistics, but the underlying physical situations are conceptually different.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/ch10-partial-trace.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>

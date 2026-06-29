@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 12 — Amplitude & Phase Damping · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <a class="toc-chapter is-live" href="ch02-inner-outer-product.html">2. Inner & Outer Product</a>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <a class="toc-chapter is-live" href="ch04-unitary-hermitian.html">4. Unitary & Hermitian</a>
+      <a class="toc-chapter is-live" href="ch05-tensor-kronecker-product.html">5. Tensor / Kronecker Product</a>
+      <a class="toc-chapter is-live" href="ch06-commutation-relations.html">6. Commutation Relations</a>
+      <a class="toc-chapter is-live" href="ch07-postulates-measurement.html">7. Postulates & Measurement</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <a class="toc-chapter is-live" href="ch08-density-matrices.html">8. Density Matrices</a>
+      <a class="toc-chapter is-live" href="ch09-pure-mixed-states.html">9. Pure vs. Mixed States</a>
+      <a class="toc-chapter is-live" href="ch10-partial-trace.html">10. Partial Trace</a>
+      <a class="toc-chapter is-live" href="ch11-kraus-operators.html">11. Kraus Operators</a>
+      <a class="toc-chapter is-live is-current" href="ch12-amplitude-phase-damping.html">12. Amplitude & Phase Damping</a>
+      <a class="toc-chapter is-live" href="ch13-amplifying-channel.html">13. Amplifying Channel</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <span class="toc-chapter is-locked">14–19. Teleportation → GHZ/W → Dicke</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <span class="toc-chapter is-locked">22–31. Parallelism → Shor</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part II · Chapter 12</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Amplitude & Phase Damping</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~22 min</span>
+        <span><b>Prerequisites</b> Ch. 9, Ch. 11</span>
+        <span><b>Tools</b> Bloch-slice damping widget, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <span class="level-tag basic">Basic</span>
+      <p class="lede">Ch. 11 gave you the general framework for noise. This chapter covers the two noise processes that actually show up on every piece of real quantum hardware in existence: a qubit losing energy to its surroundings, and a qubit losing phase coherence without losing any energy at all. They look superficially similar in their math, but they do genuinely different things — and the difference matters enormously for anyone actually building a quantum computer.</p>
+
+      <h2>Amplitude damping — losing energy</h2>
+      <p>Picture a qubit as a two-level atom: |0⟩ the ground state, |1⟩ an excited state. Left alone long enough, an excited atom spontaneously decays to the ground state, emitting a photon. That's amplitude damping — γ is the probability of decaying from |1⟩ to |0⟩:</p>
+      <div style="text-align:center; margin: 14px 0;">$$K_0=\begin{bmatrix}1&0\\0&\sqrt{1-\gamma}\end{bmatrix} \qquad K_1=\begin{bmatrix}0&\sqrt{\gamma}\\0&0\end{bmatrix}$$</div>
+
+      <h2>Phase damping — losing coherence, not energy</h2>
+      <p>Phase damping describes a different kind of disturbance: the environment "peeks" at the qubit's phase relationship without exchanging any energy. Populations (the |0⟩ vs. |1⟩ probabilities) stay exactly where they were; only the off-diagonal coherence terms shrink.</p>
+      <div style="text-align:center; margin: 14px 0;">$$K_0=\begin{bmatrix}1&0\\0&\sqrt{1-\lambda}\end{bmatrix} \qquad K_1=\begin{bmatrix}0&0\\0&\sqrt{\lambda}\end{bmatrix}$$</div>
+
+      <span class="level-tag intermediate">Intermediate</span>
+      <figure class="qc-figure" id="damp-widget">
+        <div class="figure-label"><span>Fig. 12.1 — set a starting state, dial in noise, pick a channel</span><span>x-z Bloch slice</span></div>
+        <div class="figure-body">
+          <div class="toggle-row">
+            <button class="damp-type-btn toggle-btn is-active" data-type="amplitude">Amplitude damping</button>
+            <button class="damp-type-btn toggle-btn" data-type="phase">Phase damping</button>
+          </div>
+          <div class="slider-row" style="max-width: 320px;">
+            <label><span>θ (starting angle)</span><span id="damp-theta-val">90°</span></label>
+            <input type="range" id="damp-theta-slider" min="0" max="180" step="1" value="90" />
+          </div>
+          <div class="slider-row" style="max-width: 320px;">
+            <label><span>γ (damping strength)</span><span id="damp-gamma-val">0.4</span></label>
+            <input type="range" id="damp-gamma-slider" min="0" max="1" step="0.02" value="0.4" />
+          </div>
+          <div class="vec-plane-wrap"><svg id="damp-svg" width="200" height="200" viewBox="0 0 200 200"></svg></div>
+          <div class="vec-readout" id="damp-readout" style="text-align:center; max-width: 480px; margin: 10px auto 0;"></div>
+        </div>
+        <figcaption>Blue ring = input state, amber dot = output after the channel. With amplitude damping, the point is pulled <em>up</em> toward |0⟩ — try θ=90° and watch it. With phase damping, the point only moves <em>horizontally</em>, toward the vertical axis — the z-coordinate never changes at all, no matter how large γ gets.</figcaption>
+      </figure>
+
+      <h3>Reading the difference directly off the matrices</h3>
+      <p>Both channels share the exact same K₀ — that's not a coincidence, and it's worth noticing. Where they differ is K₁: amplitude damping's K₁ has its nonzero entry in the corner that moves population from |1⟩ to |0⟩ (an off-diagonal placement); phase damping's K₁ is purely diagonal, so it can never move population between basis states — it can only attack the coherence between them.</p>
+
+      <span class="level-tag advanced">Advanced</span>
+      <h3>Connecting γ, λ to real hardware: T₁ and T₂</h3>
+      <p>If you've ever seen a real quantum computing paper, you've seen T₁ and T₂ times. T₁ ("relaxation time") is the characteristic decay time for amplitude damping: γ(t) = 1−e^(−t/T₁). T₂ ("dephasing time") plays the same role for phase damping. These aren't abstract — they're literally the numbers superconducting and trapped-ion qubits are benchmarked on, and Fig. 12.1's γ slider is sweeping through exactly the same physical process those papers are timing.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 12.2 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+def amplitude_damping_kraus(gamma):
+    K0 = np.array([[1, 0], [0, np.sqrt(1 - gamma)]])
+    K1 = np.array([[0, np.sqrt(gamma)], [0, 0]])
+    return [K0, K1]
+
+def phase_damping_kraus(lam):
+    K0 = np.array([[1, 0], [0, np.sqrt(1 - lam)]])
+    K1 = np.array([[0, 0], [0, np.sqrt(lam)]])
+    return [K0, K1]
+
+def apply(Ks, rho):
+    return sum(K @ rho @ K.conj().T for K in Ks)
+
+plus = np.array([[1], [1]]) / np.sqrt(2)
+rho = plus @ plus.conj().T
+
+gamma = 0.4
+ad_out = apply(amplitude_damping_kraus(gamma), rho)
+pd_out = apply(phase_damping_kraus(gamma), rho)
+
+print("Amplitude damping on |+>:\n", ad_out, "\n -> diagonal SHIFTS toward |0>")
+print("\nPhase damping on |+>:\n", pd_out, "\n -> diagonal stays at 0.5/0.5, only off-diagonal shrinks")</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>Compare the diagonal entries between the two outputs directly — that's the entire conceptual difference between these two channels, in two printed matrices.</figcaption>
+      </figure>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: amplitude & phase damping</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Paper</span><a href="https://arxiv.org/abs/1606.01145" target="_blank" rel="noopener">Arsenijević & Banković, "Microscopic derivation of one-qubit Kraus operators" (arXiv)</a><span class="res-note">A from-first-principles derivation of exactly the Kraus operators used in this chapter, confirming the standard forms.</span></li>
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §8.3</a><span class="res-note">The canonical reference treatment of both channels.</span></li>
+          <li><span class="res-type">Article</span><a href="https://en.wikipedia.org/wiki/Amplitude_damping_channel" target="_blank" rel="noopener">Wikipedia — Amplitude damping channel</a><span class="res-note">Includes the generalized amplitude damping channel covered next, in Ch. 13.</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch12-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What physical process does amplitude damping model?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Energy loss — spontaneous decay from the excited state |1⟩ to the ground state |0⟩, with probability γ.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch12-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Does phase damping change the probability of measuring |0⟩ vs. |1⟩?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>No — the diagonal (population) entries of ρ stay exactly the same. Only the off-diagonal coherence terms shrink.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch12-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">In Fig. 12.1, why does amplitude damping pull the point toward |0⟩ specifically, rather than toward the center?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Because amplitude damping is asymmetric by design — it only describes decay from |1⟩ to |0⟩, never the reverse, so every application nudges population toward the |0⟩ pole rather than uniformly toward the maximally mixed center.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch12-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What's the single matrix-structure difference between the K₁ of amplitude damping and the K₁ of phase damping?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Amplitude damping's K₁ is off-diagonal (it moves population between |0⟩ and |1⟩); phase damping's K₁ is purely diagonal (it can only attack coherence, never move population).</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch12-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What do T₁ and T₂ measure on real quantum hardware?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>T₁ is the characteristic relaxation time for amplitude damping (energy loss); T₂ is the characteristic dephasing time for phase damping (coherence loss). Both are standard benchmarking numbers for real qubits.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/ch12-damping.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>
