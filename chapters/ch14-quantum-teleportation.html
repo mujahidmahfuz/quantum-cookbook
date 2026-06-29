@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 14 — Quantum Teleportation · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <a class="toc-chapter is-live" href="ch02-inner-outer-product.html">2. Inner & Outer Product</a>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <a class="toc-chapter is-live" href="ch04-unitary-hermitian.html">4. Unitary & Hermitian</a>
+      <a class="toc-chapter is-live" href="ch05-tensor-kronecker-product.html">5. Tensor / Kronecker Product</a>
+      <a class="toc-chapter is-live" href="ch06-commutation-relations.html">6. Commutation Relations</a>
+      <a class="toc-chapter is-live" href="ch07-postulates-measurement.html">7. Postulates & Measurement</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <a class="toc-chapter is-live" href="ch08-density-matrices.html">8. Density Matrices</a>
+      <a class="toc-chapter is-live" href="ch09-pure-mixed-states.html">9. Pure vs. Mixed States</a>
+      <a class="toc-chapter is-live" href="ch10-partial-trace.html">10. Partial Trace</a>
+      <a class="toc-chapter is-live" href="ch11-kraus-operators.html">11. Kraus Operators</a>
+      <a class="toc-chapter is-live" href="ch12-amplitude-phase-damping.html">12. Amplitude & Phase Damping</a>
+      <a class="toc-chapter is-live" href="ch13-amplifying-channel.html">13. Amplifying Channel</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <a class="toc-chapter is-live is-current" href="ch14-quantum-teleportation.html">14. Quantum Teleportation</a>
+      <a class="toc-chapter is-live" href="ch15-locc.html">15. LOCC</a>
+      <a class="toc-chapter is-live" href="ch16-multipartite-entanglement.html">16. Multipartite Entanglement</a>
+      <a class="toc-chapter is-live" href="ch17-ghz-w-states.html">17. GHZ and W States</a>
+      <a class="toc-chapter is-live" href="ch18-cluster-graph-states.html">18. Cluster and Graph States</a>
+      <a class="toc-chapter is-live" href="ch19-dicke-states.html">19. Dicke States</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <span class="toc-chapter is-locked">22–31. Parallelism → Shor</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part III · Chapter 14</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Quantum Teleportation</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~22 min</span>
+        <span><b>Prerequisites</b> Ch. 3–5, Ch. 7</span>
+        <span><b>Tools</b> live protocol widget, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <span class="level-tag basic">Basic</span>
+      <p class="lede">No matter is transported, no faster-than-light signal is sent, and nothing about quantum teleportation breaks relativity — despite the name. What actually happens is more interesting: Alice can transmit a qubit's <em>exact state</em> to Bob using only a shared entangled pair, two classical bits sent over an ordinary channel, and zero direct quantum transmission of the state itself.</p>
+
+      <h2>What you need</h2>
+      <ul>
+        <li>An unknown state |φ⟩ = α|0⟩+β|1⟩ that Alice wants to send (she doesn't need to know α, β — that's the whole point).</li>
+        <li>One Bell pair (|00⟩+|11⟩)/√2 shared in advance between Alice and Bob, one qubit each.</li>
+        <li>A classical communication channel — a phone call is enough.</li>
+      </ul>
+
+      <figure class="qc-figure">
+        <div class="figure-label"><span>Fig. 14.1 — the protocol, as a circuit</span><span>C = unknown qubit, A/B = the shared Bell pair</span></div>
+        <div class="figure-body static-diagram-wrap">
+          <svg width="440" height="170" viewBox="0 0 440 170">
+            <text x="10" y="34" font-family="JetBrains Mono, monospace" font-size="12" fill="#6e6a60">C: |φ⟩</text>
+            <line x1="70" y1="30" x2="430" y2="30" stroke="#a39d8e" stroke-width="1" />
+            <text x="10" y="84" font-family="JetBrains Mono, monospace" font-size="12" fill="#6e6a60">A</text>
+            <line x1="70" y1="80" x2="430" y2="80" stroke="#a39d8e" stroke-width="1" />
+            <text x="10" y="134" font-family="JetBrains Mono, monospace" font-size="12" fill="#6e6a60">B</text>
+            <line x1="70" y1="130" x2="430" y2="130" stroke="#a39d8e" stroke-width="1" />
+
+            <rect x="100" y="64" width="34" height="32" fill="none" stroke="#2748c9" stroke-width="1.5" />
+            <text x="117" y="84" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2748c9">H</text>
+            <circle cx="160" cy="80" r="5" fill="#1c1a16" />
+            <circle cx="160" cy="130" r="9" fill="none" stroke="#1c1a16" stroke-width="1.5" />
+            <line x1="160" y1="85" x2="160" y2="121" stroke="#1c1a16" stroke-width="1.5" />
+            <text x="190" y="60" font-family="JetBrains Mono, monospace" font-size="10" fill="#a8702b">(A,B share a Bell pair)</text>
+
+            <circle cx="230" cy="30" r="5" fill="#1c1a16" />
+            <circle cx="230" cy="80" r="9" fill="none" stroke="#1c1a16" stroke-width="1.5" />
+            <line x1="230" y1="35" x2="230" y2="71" stroke="#1c1a16" stroke-width="1.5" />
+
+            <rect x="265" y="14" width="34" height="32" fill="none" stroke="#2748c9" stroke-width="1.5" />
+            <text x="282" y="34" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2748c9">H</text>
+
+            <rect x="320" y="14" width="20" height="32" fill="none" stroke="#a8702b" stroke-width="1.5" />
+            <text x="330" y="34" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#a8702b">M</text>
+            <rect x="320" y="64" width="20" height="32" fill="none" stroke="#a8702b" stroke-width="1.5" />
+            <text x="330" y="84" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#a8702b">M</text>
+
+            <line x1="340" y1="30" x2="390" y2="115" stroke="#a39d8e" stroke-width="1" stroke-dasharray="3 3" />
+            <line x1="340" y1="80" x2="395" y2="118" stroke="#a39d8e" stroke-width="1" stroke-dasharray="3 3" />
+            <rect x="380" y="110" width="50" height="34" fill="none" stroke="#1c1a16" stroke-width="1.5" />
+            <text x="405" y="131" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#1c1a16">Xᵃ Zᶜ</text>
+            <text x="405" y="160" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6e6a60">(correction)</text>
+          </svg>
+        </div>
+        <figcaption>Alice's two measurement outcomes (c,a) are sent classically to Bob — those dashed lines are an ordinary phone call, never faster than light. Bob applies X if a=1, then Z if c=1; either, both, or neither may fire.</figcaption>
+      </figure>
+
+      <span class="level-tag intermediate">Intermediate</span>
+      <figure class="qc-figure" id="tp-widget">
+        <div class="figure-label"><span>Fig. 14.2 — set an unknown state, run the real protocol</span><span>genuinely random outcome each time</span></div>
+        <div class="figure-body">
+          <div class="slider-row" style="max-width: 320px;">
+            <label><span>θ</span><span id="tp-theta-val">60°</span></label>
+            <input type="range" id="tp-theta-slider" min="0" max="180" step="1" value="60" />
+          </div>
+          <div class="slider-row" style="max-width: 320px;">
+            <label><span>φ</span><span id="tp-phi-val">40°</span></label>
+            <input type="range" id="tp-phi-slider" min="0" max="360" step="1" value="40" />
+          </div>
+          <button class="btn is-signal" id="tp-run" style="margin: 10px 0;">Run teleportation ▸ (random each time)</button>
+          <div class="protocol-step is-active"><span class="vec-readout" id="tp-original"></span></div>
+          <div class="protocol-step"><span class="vec-readout" id="tp-outcome"></span></div>
+          <div class="protocol-step"><span class="vec-readout" id="tp-before-correction"></span></div>
+          <div class="protocol-step"><span class="vec-readout" id="tp-correction"></span></div>
+          <div class="protocol-step"><span class="vec-readout" id="tp-final"></span></div>
+          <div class="op-status-row"><span class="op-status" id="tp-match-tag">Match: —</span></div>
+        </div>
+        <figcaption>This runs an actual 3-qubit circuit simulation every click — Alice's measurement outcome is genuinely random, but the final corrected state matches |φ⟩ exactly, every single time, regardless of which of the 4 outcomes occurred.</figcaption>
+      </figure>
+
+      <h3>Why the correction depends on the outcome</h3>
+      <p>All four of Alice's possible outcomes are equally likely (25% each), and each one leaves Bob's qubit in a <em>related but different</em> state — α|0⟩+β|1⟩ rotated by some combination of X and Z. Bob doesn't know which until Alice's two classical bits arrive; once they do, the correction is completely deterministic. This is exactly why the classical channel is required: without it, Bob is holding one of four possible states with no way to know which, which carries zero usable information about |φ⟩ on its own.</p>
+
+      <span class="level-tag advanced">Advanced</span>
+      <h3>What was and wasn't transmitted</h3>
+      <p>The original qubit C is destroyed by Alice's measurement — this is required, not incidental: the no-cloning theorem forbids a perfect copy from existing at both ends simultaneously, and teleportation respects it exactly by destroying the original as a side effect of extracting the classical bits. No information traveled faster than light: Bob's qubit is in one of four possible states immediately after Alice's measurement, and it takes the classical bits, limited to light speed, to tell him which correction turns it into |φ⟩. Until those bits arrive, Bob's qubit is — to him — indistinguishable from a fresh, uncorrelated qubit.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 14.3 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+def kron(*ops):
+    result = ops[0]
+    for op in ops[1:]:
+        result = np.kron(result, op)
+    return result
+
+I = np.eye(2)
+H = (1/np.sqrt(2)) * np.array([[1, 1], [1, -1]])
+X = np.array([[0, 1], [1, 0]])
+Z = np.array([[1, 0], [0, -1]])
+
+# State to teleport (arbitrary)
+theta, phi = np.deg2rad(60), np.deg2rad(40)
+phi_state = np.array([np.cos(theta/2), np.exp(1j*phi)*np.sin(theta/2)])
+
+# Full state: C tensor A tensor B, A,B start at |00>
+state = kron(phi_state, [1, 0], [1, 0])
+
+# Build Bell pair on A,B: H on A, then CNOT(A,B)
+H_on_A = kron(I, H, I)
+state = H_on_A @ state
+
+def cnot(control_is_msb_of_pair):
+    # 8x8 CNOT for our 3-qubit ordering, applied via explicit index permutation
+    out = np.zeros(8, dtype=complex)
+    for i in range(8):
+        c = (i >> control_is_msb_of_pair[0]) & 1
+        t = control_is_msb_of_pair[1]
+        j = i ^ (c << t)
+        out[j] = state[i]
+    return out
+
+state = cnot((1, 0))   # CNOT(A -> B), A=wire1, B=wire0
+state = cnot((2, 1))   # CNOT(C -> A)
+state = (kron(H, I, I)) @ state  # H on C
+
+probs = np.abs(state)**2
+print("Probability of each (C,A,B) outcome:", np.round(probs, 3))
+print("\nSum of probabilities for each (C,A) pair (should each be 0.25):")
+for c in [0, 1]:
+    for a in [0, 1]:
+        p = probs[4*c + 2*a + 0] + probs[4*c + 2*a + 1]
+        print(f"  C={c}, A={a}: {p:.3f}")</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>Every outcome pair has exactly 25% probability, regardless of α and β — Alice's measurement reveals nothing about the state she's sending, which is exactly why it doesn't violate no-cloning.</figcaption>
+      </figure>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: quantum teleportation</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Paper</span><a href="https://arxiv.org/abs/quant-ph/9806082" target="_blank" rel="noopener">"Quantum telecloning and multiparticle entanglement" (arXiv)</a><span class="res-note">Clean statement of the standard protocol used as this chapter's reference.</span></li>
+          <li><span class="res-type">Tool</span><a href="https://pennylane.ai/demos/tutorial_teleportation" target="_blank" rel="noopener">PennyLane — Quantum Teleportation demo</a><span class="res-note">A code-first walkthrough that pairs well with Fig. 14.3.</span></li>
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §1.3.7</a><span class="res-note">The original protocol description and no-cloning connection.</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch14-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What three resources does quantum teleportation require?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>The unknown state to be sent, one shared Bell pair, and a classical communication channel for 2 bits.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch14-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Does Alice's measurement reveal any information about α and β to her?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>No — every one of her 4 possible outcomes has exactly 25% probability regardless of α and β, so the outcome carries zero information about the state being sent.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch14-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Why doesn't teleportation violate the speed-of-light limit?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Bob's qubit isn't usable as |φ⟩ until the classical bits describing which correction to apply arrive — and that classical transmission is limited to light speed, same as a phone call.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch14-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What happens to the original qubit C during teleportation, and why does that matter?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>It's destroyed by Alice's measurement. This is required by the no-cloning theorem — a perfect copy can't exist at both Alice's and Bob's locations simultaneously, and teleportation respects this by consuming the original as part of the protocol.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch14-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">If Alice's outcome is (C=1, A=0), what correction does Bob apply?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Just Z — the correction rule is X if A=1, then Z if C=1. Here A=0 so no X is needed, but C=1 means Z is applied.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/ch14-teleportation.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>

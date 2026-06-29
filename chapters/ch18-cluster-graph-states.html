@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 18 — Cluster and Graph States · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <a class="toc-chapter is-live" href="ch02-inner-outer-product.html">2. Inner & Outer Product</a>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <a class="toc-chapter is-live" href="ch04-unitary-hermitian.html">4. Unitary & Hermitian</a>
+      <a class="toc-chapter is-live" href="ch05-tensor-kronecker-product.html">5. Tensor / Kronecker Product</a>
+      <a class="toc-chapter is-live" href="ch06-commutation-relations.html">6. Commutation Relations</a>
+      <a class="toc-chapter is-live" href="ch07-postulates-measurement.html">7. Postulates & Measurement</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <a class="toc-chapter is-live" href="ch08-density-matrices.html">8. Density Matrices</a>
+      <a class="toc-chapter is-live" href="ch09-pure-mixed-states.html">9. Pure vs. Mixed States</a>
+      <a class="toc-chapter is-live" href="ch10-partial-trace.html">10. Partial Trace</a>
+      <a class="toc-chapter is-live" href="ch11-kraus-operators.html">11. Kraus Operators</a>
+      <a class="toc-chapter is-live" href="ch12-amplitude-phase-damping.html">12. Amplitude & Phase Damping</a>
+      <a class="toc-chapter is-live" href="ch13-amplifying-channel.html">13. Amplifying Channel</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <a class="toc-chapter is-live" href="ch14-quantum-teleportation.html">14. Quantum Teleportation</a>
+      <a class="toc-chapter is-live" href="ch15-locc.html">15. LOCC</a>
+      <a class="toc-chapter is-live" href="ch16-multipartite-entanglement.html">16. Multipartite Entanglement</a>
+      <a class="toc-chapter is-live" href="ch17-ghz-w-states.html">17. GHZ and W States</a>
+      <a class="toc-chapter is-live is-current" href="ch18-cluster-graph-states.html">18. Cluster and Graph States</a>
+      <a class="toc-chapter is-live" href="ch19-dicke-states.html">19. Dicke States</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <span class="toc-chapter is-locked">22–31. Parallelism → Shor</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part III · Chapter 18</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Cluster and Graph States</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~22 min</span>
+        <span><b>Prerequisites</b> Ch. 3–4, Ch. 17</span>
+        <span><b>Tools</b> interactive graph builder, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <span class="level-tag basic">Basic</span>
+      <p class="lede">GHZ and W states each entangle every qubit with every other qubit, all at once, with no extra structure. Graph states do something different and arguably more useful: they let you choose <em>exactly which qubits are entangled with which</em>, using an ordinary picture — a graph — as the literal blueprint.</p>
+
+      <h2>The recipe</h2>
+      <ol>
+        <li>Draw any graph: some dots (vertices), some lines connecting pairs of them (edges).</li>
+        <li>Put one qubit on each vertex, every one starting in the state |+⟩.</li>
+        <li>For every edge in the graph, apply a CZ gate between the two qubits it connects.</li>
+      </ol>
+      <p>That's the entire construction. The resulting entangled state is called a <strong>graph state</strong> — and a <strong>cluster state</strong> is just the special case where the graph happens to be a regular lattice (a grid).</p>
+
+      <span class="level-tag intermediate">Intermediate</span>
+      <figure class="qc-figure" id="graph-widget">
+        <div class="figure-label"><span>Fig. 18.1 — click an edge to toggle it</span><span>3-qubit graph state, live</span></div>
+        <div class="figure-body">
+          <div class="static-diagram-wrap">
+            <svg id="graph-svg" width="180" height="160" viewBox="0 0 180 160"></svg>
+          </div>
+          <p class="vec-readout" id="graph-state" style="text-align:center; margin: 14px auto; max-width: 420px;"></p>
+          <p class="eyebrow" style="text-align:center; display:block;">Stabilizer generators (each should leave the state exactly unchanged)</p>
+          <div id="graph-stabilizers" style="max-width: 320px; margin: 8px auto 0; text-align: center;"></div>
+        </div>
+        <figcaption>Every stabilizer has the form Xᵥ times Z on each of v's neighbors — this is the direct payoff of choosing the graph structure: the entangling structure of CZ gates literally hands you the stabilizers for free, just by reading the graph.</figcaption>
+      </figure>
+
+      <h3>Why this matters: measurement-based quantum computing</h3>
+      <p>Build one large graph state in advance, then perform <em>only single-qubit measurements</em>, chosen adaptively based on earlier outcomes — and you can implement any quantum circuit at all. This is "one-way" or measurement-based quantum computing: all the entanglement is prepared up front as one big resource, and the actual "program" is just which basis you measure each qubit in. No further two-qubit gates are ever needed once the graph state exists.</p>
+
+      <span class="level-tag advanced">Advanced</span>
+      <h3>Why cluster states specifically, and why photonics loves them</h3>
+      <p>A 2D cluster state (a square-lattice graph) is provably enough to run any quantum circuit via measurement alone — this was the original Raussendorf–Briegel result that started the entire measurement-based computing field. Cluster/graph states are also the natural fit for photonic quantum computing, where two-qubit gates between photons are notoriously hard to do reliably, but a large entangled "web" of photons can be built up in advance from smaller pieces (a process called <strong>fusion</strong>) and then consumed entirely through single-photon measurements — exactly the architecture several leading photonic quantum computing efforts are built around.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 18.2 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+def kron(*ops):
+    r = ops[0]
+    for op in ops[1:]:
+        r = np.kron(r, op)
+    return r
+
+I, X, Z = np.eye(2), np.array([[0,1],[1,0]]), np.array([[1,0],[0,-1]])
+H = (1/np.sqrt(2)) * np.array([[1,1],[1,-1]])
+
+def cz(n, a, b):
+    dim = 2**n
+    out = np.eye(dim, dtype=complex)
+    for i in range(dim):
+        if (i >> a) & 1 and (i >> b) & 1:
+            out[i, i] = -1
+    return out
+
+# 3-qubit graph state for the path 0-1-2
+state = kron(H, H, H) @ np.array([1,0,0,0,0,0,0,0], dtype=complex)
+state = cz(3, 0, 1) @ state
+state = cz(3, 1, 2) @ state
+
+print("Graph state amplitudes:", np.round(state, 3))
+
+# Verify stabilizer X1 Z0 Z2 (qubit 1's neighbors are 0 and 2)
+stab = kron(Z, X, Z)  # ordering: qubit2 (MSB), qubit1, qubit0 (LSB) -- adjust kron order to match your indexing
+print("Stabilizer leaves state unchanged:", np.allclose(stab @ state, state) or np.allclose(-stab @ state, state))</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>Qubit ordering conventions for kron-based circuits are a classic source of off-by-one bugs — worth comparing carefully against Fig. 18.1's own (separately verified) indexing if you adapt this code.</figcaption>
+      </figure>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: cluster and graph states</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Article</span><a href="https://en.wikipedia.org/wiki/Cluster_state" target="_blank" rel="noopener">Wikipedia — Cluster state</a><span class="res-note">General reference, including the lattice-specific definition.</span></li>
+          <li><span class="res-type">Tool</span><a href="https://pennylane.ai/demos/tutorial_mbqc" target="_blank" rel="noopener">PennyLane — Measurement-based quantum computation demo</a><span class="res-note">Hands-on walkthrough of using a cluster state to run an actual circuit via measurement.</span></li>
+          <li><span class="res-type">Article</span><a href="https://peterrohde.org/an-introduction-to-graph-states/" target="_blank" rel="noopener">Peter Rohde — An introduction to graph states</a><span class="res-note">Accessible bridge between this chapter's stabilizer formalism and circuit compilation.</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch18-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What are the three steps to build a graph state from a graph?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Put a qubit on each vertex, initialize every qubit to |+⟩, then apply CZ between every pair of qubits connected by an edge.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch18-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What's a cluster state, specifically, versus a graph state in general?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>A cluster state is the special case of a graph state where the underlying graph is a regular lattice (a grid). Every cluster state is a graph state; not every graph state is a cluster state.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch18-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">For a vertex v with neighbors {a,b}, what's its stabilizer generator?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Xᵥ · Zₐ · Z_b — X on v itself, times Z on every one of v's neighbors.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch18-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What's the core idea of measurement-based ("one-way") quantum computing?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Prepare one large entangled graph/cluster state up front, then implement the entire computation using only single-qubit measurements, with later measurement choices depending adaptively on earlier outcomes — no further two-qubit gates needed.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch18-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Why are graph/cluster states especially attractive for photonic quantum computing?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Two-qubit gates between photons are difficult and unreliable, but a large entangled graph state can be assembled in advance from smaller pieces (via fusion) and then consumed entirely through easy single-photon measurements — sidestepping the need for in-computation two-qubit gates altogether.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/ch18-graph-states.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>

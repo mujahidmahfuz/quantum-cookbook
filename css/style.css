@@ -690,3 +690,13 @@ table.qc-table td.mono { color: var(--signal); }
 .level-tag.basic { background: var(--green-bg); color: var(--green); }
 .level-tag.intermediate { background: var(--amber-bg); color: var(--amber); }
 .level-tag.advanced { background: #ece3f5; color: #7a3fa6; }
+
+/* ---------- Part III shared widget styles ---------- */
+.protocol-step { border-left: 3px solid var(--rule); padding: 6px 0 6px 14px; margin-bottom: 4px; }
+.protocol-step.is-active { border-left-color: var(--signal); }
+.graph-node { fill: var(--paper-raised); stroke: var(--ink); stroke-width: 1.5; cursor: pointer; }
+.graph-node.is-selected { stroke: var(--signal); fill: var(--signal-dim); }
+.graph-edge { stroke: var(--ink-faint); stroke-width: 2; cursor: pointer; }
+.graph-edge.is-active { stroke: var(--signal); }
+.bipartition-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--rule); font-family: var(--font-mono); font-size: 13px; }
+.op-status.is-mid { background: var(--amber-bg); color: var(--amber); border-color: var(--amber); }

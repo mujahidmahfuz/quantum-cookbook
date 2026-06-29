@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 16 — Multipartite Entanglement · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <a class="toc-chapter is-live" href="ch02-inner-outer-product.html">2. Inner & Outer Product</a>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <a class="toc-chapter is-live" href="ch04-unitary-hermitian.html">4. Unitary & Hermitian</a>
+      <a class="toc-chapter is-live" href="ch05-tensor-kronecker-product.html">5. Tensor / Kronecker Product</a>
+      <a class="toc-chapter is-live" href="ch06-commutation-relations.html">6. Commutation Relations</a>
+      <a class="toc-chapter is-live" href="ch07-postulates-measurement.html">7. Postulates & Measurement</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <a class="toc-chapter is-live" href="ch08-density-matrices.html">8. Density Matrices</a>
+      <a class="toc-chapter is-live" href="ch09-pure-mixed-states.html">9. Pure vs. Mixed States</a>
+      <a class="toc-chapter is-live" href="ch10-partial-trace.html">10. Partial Trace</a>
+      <a class="toc-chapter is-live" href="ch11-kraus-operators.html">11. Kraus Operators</a>
+      <a class="toc-chapter is-live" href="ch12-amplitude-phase-damping.html">12. Amplitude & Phase Damping</a>
+      <a class="toc-chapter is-live" href="ch13-amplifying-channel.html">13. Amplifying Channel</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <a class="toc-chapter is-live" href="ch14-quantum-teleportation.html">14. Quantum Teleportation</a>
+      <a class="toc-chapter is-live" href="ch15-locc.html">15. LOCC</a>
+      <a class="toc-chapter is-live is-current" href="ch16-multipartite-entanglement.html">16. Multipartite Entanglement</a>
+      <a class="toc-chapter is-live" href="ch17-ghz-w-states.html">17. GHZ and W States</a>
+      <a class="toc-chapter is-live" href="ch18-cluster-graph-states.html">18. Cluster and Graph States</a>
+      <a class="toc-chapter is-live" href="ch19-dicke-states.html">19. Dicke States</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <span class="toc-chapter is-locked">22–31. Parallelism → Shor</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part III · Chapter 16</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">Multipartite Entanglement</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~18 min</span>
+        <span><b>Prerequisites</b> Ch. 10, Ch. 15</span>
+        <span><b>Tools</b> bipartition classifier, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <span class="level-tag basic">Basic</span>
+      <p class="lede">Every entangled state you've met so far has had exactly 2 qubits. With 3 or more, "is it entangled?" stops being a yes/no question — there are several genuinely different ways a multi-qubit state can be entangled, or only partly entangled, or not entangled at all. This chapter is the vocabulary for telling them apart, before Ch. 17 dives into the two most famous examples.</p>
+
+      <h2>Three categories, one test</h2>
+      <p>For an n-qubit state, check every way of splitting the qubits into two groups (a <strong>bipartition</strong>) and ask, using Ch. 10's partial trace: is each group's reduced state pure (unentangled across that particular split) or mixed (entangled across it)?</p>
+      <ul>
+        <li><strong>Fully separable:</strong> every bipartition is unentangled. The whole state is really just a product of independent pieces.</li>
+        <li><strong>Biseparable:</strong> at least one bipartition is unentangled, but not all of them. Some genuine entanglement exists, but it doesn't involve every qubit at once.</li>
+        <li><strong>Genuinely multipartite entangled:</strong> every possible bipartition shows entanglement. No qubit can be peeled off as an independent, unentangled piece — the entanglement is fundamentally a property of the whole group.</li>
+      </ul>
+
+      <span class="level-tag intermediate">Intermediate</span>
+      <figure class="qc-figure" id="mp-widget">
+        <div class="figure-label"><span>Fig. 16.1 — pick a 3-qubit state, check every bipartition</span><span>classifies it live</span></div>
+        <div class="figure-body">
+          <div class="preset-row" style="margin-bottom: 14px;">
+            <button class="mp-preset-btn matrix-preset is-active" data-preset="product">Product |000⟩</button>
+            <button class="mp-preset-btn matrix-preset" data-preset="biseparable">Biseparable</button>
+            <button class="mp-preset-btn matrix-preset" data-preset="ghz">GHZ</button>
+            <button class="mp-preset-btn matrix-preset" data-preset="w">W</button>
+          </div>
+          <p class="vec-readout" id="mp-state-label" style="margin-bottom: 10px;"></p>
+          <div id="mp-bipartitions" style="border: 1px solid var(--rule); margin-bottom: 14px;"></div>
+          <div class="op-status-row"><span class="op-status" id="mp-classification">—</span></div>
+        </div>
+        <figcaption>"Biseparable" shows exactly 2 of 3 bipartitions entangled (q0 and q1 are individually entangled with the rest, because they're a Bell pair with each other) and 1 separable (q2, which was never touched). GHZ and W both pass as genuinely multipartite entangled — every single bipartition shows entanglement for both — even though Ch. 17 will show they're entangled in completely different ways.</figcaption>
+      </figure>
+
+      <span class="level-tag advanced">Advanced</span>
+      <h3>"Genuinely entangled" doesn't mean "the same kind of entangled"</h3>
+      <p>This is the chapter's most important warning, and it's exactly why Ch. 17 needs to exist at all: passing the "genuinely multipartite entangled" test in Fig. 16.1 is necessary but nowhere near sufficient to characterize a state's entanglement. GHZ and W both pass — every bipartition entangled for both — and yet Ch. 15 already told you they're LOCC-inequivalent: no sequence of local operations and classical communication can convert one into the other. The bipartition test in this chapter is a coarse classification (3 categories); a complete description of multipartite entanglement structure requires much finer tools, several of which (entanglement entropy, the various tangle measures) are active areas of ongoing research, not settled textbook material.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 16.2 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+def reduced_purity(state, dim, keep_wire):
+    rho = np.zeros((2, 2), dtype=complex)
+    for i in range(dim):
+        for j in range(dim):
+            match = all(((i >> w) & 1) == ((j >> w) & 1) for w in range(3) if w != keep_wire)
+            if not match:
+                continue
+            ri, rj = (i >> keep_wire) & 1, (j >> keep_wire) & 1
+            rho[ri, rj] += state[i] * np.conj(state[j])
+    return np.trace(rho @ rho).real
+
+ghz = np.zeros(8); ghz[0] = ghz[7] = 1/np.sqrt(2)
+w   = np.zeros(8); w[1] = w[2] = w[4] = 1/np.sqrt(3)
+
+for name, state in [("GHZ", ghz), ("W", w)]:
+    purities = [round(reduced_purity(state, 8, k), 3) for k in range(3)]
+    print(f"{name}: bipartition purities = {purities}  (all < 1 -> genuinely multipartite entangled)")</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>Both pass the same coarse test identically — which is exactly why a coarser tool can't be the whole story, and why Ch. 17 exists.</figcaption>
+      </figure>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: multipartite entanglement</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §12.5</a><span class="res-note">Bipartite and multipartite entanglement measures.</span></li>
+          <li><span class="res-type">Article</span><a href="https://en.wikipedia.org/wiki/Multipartite_entanglement" target="_blank" rel="noopener">Wikipedia — Multipartite entanglement</a><span class="res-note">Survey of the classification scheme and ongoing research directions mentioned in the Advanced section.</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch16-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What test does this chapter use to classify a multi-qubit state's entanglement?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Check every bipartition (way of splitting the qubits into two groups) and see whether the reduced state of each group is pure (separable) or mixed (entangled) across that split.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch16-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What's the difference between "biseparable" and "genuinely multipartite entangled"?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Biseparable means at least one bipartition is unentangled — some qubit (or group) can be peeled off as independent. Genuinely multipartite entangled means every bipartition shows entanglement, with no qubit separable from the rest at all.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch16-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">For Bell(q0,q1) ⊗ |0⟩₂, which bipartition is separable?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>q2 | (q0,q1) — q2 was never entangled with anything, so splitting it off from the rest leaves both pieces pure.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch16-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Do GHZ and W states pass the same bipartition test in Fig. 16.1?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Yes — both show entanglement across every bipartition, so both classify as genuinely multipartite entangled by this test. The test doesn't distinguish them; Ch. 17 shows they're still very different.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch16-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Why isn't passing the "genuinely multipartite entangled" test the end of the classification story?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Because it's a coarse, 3-category test. States that pass identically (like GHZ and W) can still be LOCC-inequivalent — entangled in fundamentally different ways that this bipartition test can't distinguish.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/ch16-multipartite.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>

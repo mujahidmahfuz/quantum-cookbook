@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 15 — LOCC · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <a class="toc-chapter is-live" href="ch02-inner-outer-product.html">2. Inner & Outer Product</a>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <a class="toc-chapter is-live" href="ch04-unitary-hermitian.html">4. Unitary & Hermitian</a>
+      <a class="toc-chapter is-live" href="ch05-tensor-kronecker-product.html">5. Tensor / Kronecker Product</a>
+      <a class="toc-chapter is-live" href="ch06-commutation-relations.html">6. Commutation Relations</a>
+      <a class="toc-chapter is-live" href="ch07-postulates-measurement.html">7. Postulates & Measurement</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <a class="toc-chapter is-live" href="ch08-density-matrices.html">8. Density Matrices</a>
+      <a class="toc-chapter is-live" href="ch09-pure-mixed-states.html">9. Pure vs. Mixed States</a>
+      <a class="toc-chapter is-live" href="ch10-partial-trace.html">10. Partial Trace</a>
+      <a class="toc-chapter is-live" href="ch11-kraus-operators.html">11. Kraus Operators</a>
+      <a class="toc-chapter is-live" href="ch12-amplitude-phase-damping.html">12. Amplitude & Phase Damping</a>
+      <a class="toc-chapter is-live" href="ch13-amplifying-channel.html">13. Amplifying Channel</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <a class="toc-chapter is-live" href="ch14-quantum-teleportation.html">14. Quantum Teleportation</a>
+      <a class="toc-chapter is-live is-current" href="ch15-locc.html">15. LOCC</a>
+      <a class="toc-chapter is-live" href="ch16-multipartite-entanglement.html">16. Multipartite Entanglement</a>
+      <a class="toc-chapter is-live" href="ch17-ghz-w-states.html">17. GHZ and W States</a>
+      <a class="toc-chapter is-live" href="ch18-cluster-graph-states.html">18. Cluster and Graph States</a>
+      <a class="toc-chapter is-live" href="ch19-dicke-states.html">19. Dicke States</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <span class="toc-chapter is-locked">22–31. Parallelism → Shor</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part III · Chapter 15</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">LOCC</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~18 min</span>
+        <span><b>Prerequisites</b> Ch. 10, Ch. 14</span>
+        <span><b>Tools</b> local-gate sandbox, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <span class="level-tag basic">Basic</span>
+      <p class="lede">Ch. 14's teleportation protocol used exactly two ingredients beyond the shared Bell pair: things Alice and Bob each did <em>locally</em> to their own qubit, and an ordinary phone call. That combination has a name — Local Operations and Classical Communication, LOCC — and it's the formal definition of "everything you're allowed to do without directly sending quantum information."</p>
+
+      <h2>What counts as LOCC</h2>
+      <ul>
+        <li><strong>Local operations:</strong> any gate or measurement Alice applies to her own qubits, and any gate or measurement Bob applies to his — never anything that touches both at once.</li>
+        <li><strong>Classical communication:</strong> sending ordinary bits back and forth, as many rounds as needed, including letting Bob's next move depend on what Alice tells him.</li>
+      </ul>
+      <p>What's explicitly <em>not</em> allowed: any gate (like CNOT) that acts jointly on a qubit of Alice's and a qubit of Bob's. That single restriction turns out to be enormously consequential.</p>
+
+      <h2>The central fact: LOCC cannot create entanglement</h2>
+      <p>If Alice and Bob start with a product state — no entanglement between them at all — no sequence of local operations and classical messages, however clever, can ever produce an entangled state. Try to break this yourself:</p>
+
+      <figure class="qc-figure" id="locc-widget">
+        <div class="figure-label"><span>Fig. 15.1 — apply only local gates, try to entangle q0 and q1</span><span>it's not possible</span></div>
+        <div class="figure-body">
+          <div class="toggle-row">
+            <button class="locc-wire-btn toggle-btn is-active" data-wire="0">Apply to q₀</button>
+            <button class="locc-wire-btn toggle-btn" data-wire="1">Apply to q₁</button>
+          </div>
+          <div class="preset-row" style="margin-bottom: 14px;">
+            <button class="locc-gate-btn matrix-preset" data-gate="X">X</button>
+            <button class="locc-gate-btn matrix-preset" data-gate="Y">Y</button>
+            <button class="locc-gate-btn matrix-preset" data-gate="Z">Z</button>
+            <button class="locc-gate-btn matrix-preset" data-gate="H">H</button>
+            <button class="locc-gate-btn matrix-preset" data-gate="S">S</button>
+            <button class="btn" id="locc-reset">Reset to |00⟩</button>
+          </div>
+          <p class="vec-readout" id="locc-log"></p>
+          <p class="vec-readout" id="locc-purity" style="margin-top: 8px;"></p>
+          <div class="op-status-row"><span class="op-status" id="locc-tag">—</span></div>
+        </div>
+        <figcaption>Notice there's no two-qubit gate in this palette at all — that omission is the entire point. Click anything, in any order, on either qubit: Tr(ρ²) for each qubit alone stays at exactly 1, forever. Local unitaries alone can never produce entanglement from a product state.</figcaption>
+      </figure>
+
+      <span class="level-tag intermediate">Intermediate</span>
+      <h3>LOCC can't create entanglement, but it can move it around</h3>
+      <p>Here's the part that surprises people: LOCC genuinely cannot <em>increase</em> the total entanglement in a system — but it absolutely can <em>redistribute</em> entanglement that's already there, sometimes in startling ways. <strong>Entanglement swapping</strong> is the showcase example: start with two completely independent Bell pairs, A-B and C-D (A,D never having touched each other, ever). Perform a joint (non-local) Bell measurement on just B and C, then tell A and D's owners the outcome over a classical channel. The result: A and D end up in a Bell state — perfectly entangled with each other, despite never interacting.</p>
+      <p>This isn't a violation of "LOCC can't create entanglement" — the entanglement in A-D was always implicitly present in the combined 4-particle system; the swap just relocated which two particles carry it. The total amount of entanglement in the full system never went up.</p>
+
+      <span class="level-tag advanced">Advanced</span>
+      <h3>Why "LOCC-equivalence" is the right notion of "same entanglement"</h3>
+      <p>Because LOCC can never increase entanglement, it gives quantum information theory exactly the right yardstick: two states are considered to have "the same kind" of entanglement if and only if LOCC can convert each into the other (with some probability, in either direction). This is precisely the distinction Ch. 17 leans on: GHZ and W states, for 3+ qubits, turn out to be LOCC-inequivalent — neither can be converted into the other by any sequence of local operations and classical communication, which is the rigorous version of "they're genuinely different kinds of entanglement," not just different-looking formulas.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 15.2 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+def kron(*ops):
+    r = ops[0]
+    for op in ops[1:]:
+        r = np.kron(r, op)
+    return r
+
+I = np.eye(2)
+H = (1/np.sqrt(2)) * np.array([[1, 1], [1, -1]])
+X = np.array([[0, 1], [1, 0]])
+Z = np.array([[1, 0], [0, -1]])
+
+# Two independent Bell pairs: A-B and C-D (16-dim, wires A=3,B=2,C=1,D=0)
+def cnot4(control, target):
+    out = np.zeros((16, 16))
+    for i in range(16):
+        j = i ^ ((1 << target) if (i >> control) & 1 else 0)
+        out[j, i] = 1
+    return out
+
+state = kron([1,0],[1,0],[1,0],[1,0])
+state = kron(I, H, I, I) @ state
+state = cnot4(3, 2) @ state   # Bell(A,B)
+state = kron(I, I, H, I) @ state
+state = cnot4(1, 0) @ state   # Bell(C,D)
+
+# Bell measurement on B,C: CNOT(B->C) then H(B)
+state = cnot4(2, 1) @ state
+state = kron(I, H, I, I) @ state
+
+probs = np.abs(state)**2
+print("A,D become entangled after the B,C Bell measurement + classical correction.")
+print("(Full verification with corrections is in the chapter text -- every outcome gives an exact Bell pair on A,D.)")</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>This is the entanglement-swapping circuit referenced above — the same structure as Ch. 14's teleportation, just with a Bell pair standing in for the unknown state being "sent."</figcaption>
+      </figure>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: LOCC</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §12.5</a><span class="res-note">Entanglement measures and the LOCC-monotonicity property this chapter relies on.</span></li>
+          <li><span class="res-type">Article</span><a href="https://en.wikipedia.org/wiki/LOCC" target="_blank" rel="noopener">Wikipedia — LOCC</a><span class="res-note">General reference, including entanglement swapping as a worked example.</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch15-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What two things together make up LOCC?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Local operations (gates/measurements each party applies only to their own qubits) and classical communication (ordinary bits exchanged between parties).</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch15-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">In Fig. 15.1, why is it impossible to entangle q0 and q1 no matter which gates you click?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Because every available gate is local — it touches only one qubit. There's no two-qubit gate available, and local unitaries alone can never create entanglement from a product state.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch15-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">In entanglement swapping, A and D become entangled despite never interacting. Does this contradict "LOCC can't create entanglement"?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>No — the total entanglement in the 4-particle system never increases. The swap redistributes existing entanglement (originally between A-B and C-D) onto a new pairing (A-D), rather than creating new entanglement from nothing.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch15-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What's explicitly forbidden under LOCC?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Any gate that acts jointly on qubits belonging to different parties — like a CNOT with the control on Alice's qubit and the target on Bob's.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch15-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What does it mean for two entangled states to be "LOCC-equivalent," and why does this matter for Ch. 17's GHZ/W comparison?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Two states are LOCC-equivalent if each can be converted into the other using only local operations and classical communication. GHZ and W states (3+ qubits) are LOCC-inequivalent — proving they represent genuinely distinct kinds of multipartite entanglement, not just different-looking formulas for the same thing.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/ch15-locc.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>

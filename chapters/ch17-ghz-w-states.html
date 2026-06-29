@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch. 17 — GHZ and W States · Quantum Cookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <nav class="site-nav">
+      <a href="../index.html#toc">Contents</a>
+      <a href="../composer.html">Composer</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part I — Foundations</div>
+      <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
+      <a class="toc-chapter is-live" href="ch02-inner-outer-product.html">2. Inner & Outer Product</a>
+      <a class="toc-chapter is-live" href="ch03-bloch-sphere.html">3. Qubits & Gate Intro</a>
+      <a class="toc-chapter is-live" href="ch04-unitary-hermitian.html">4. Unitary & Hermitian</a>
+      <a class="toc-chapter is-live" href="ch05-tensor-kronecker-product.html">5. Tensor / Kronecker Product</a>
+      <a class="toc-chapter is-live" href="ch06-commutation-relations.html">6. Commutation Relations</a>
+      <a class="toc-chapter is-live" href="ch07-postulates-measurement.html">7. Postulates & Measurement</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part II — Open Systems</div>
+      <a class="toc-chapter is-live" href="ch08-density-matrices.html">8. Density Matrices</a>
+      <a class="toc-chapter is-live" href="ch09-pure-mixed-states.html">9. Pure vs. Mixed States</a>
+      <a class="toc-chapter is-live" href="ch10-partial-trace.html">10. Partial Trace</a>
+      <a class="toc-chapter is-live" href="ch11-kraus-operators.html">11. Kraus Operators</a>
+      <a class="toc-chapter is-live" href="ch12-amplitude-phase-damping.html">12. Amplitude & Phase Damping</a>
+      <a class="toc-chapter is-live" href="ch13-amplifying-channel.html">13. Amplifying Channel</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part III — Multipartite Entanglement</div>
+      <a class="toc-chapter is-live" href="ch14-quantum-teleportation.html">14. Quantum Teleportation</a>
+      <a class="toc-chapter is-live" href="ch15-locc.html">15. LOCC</a>
+      <a class="toc-chapter is-live" href="ch16-multipartite-entanglement.html">16. Multipartite Entanglement</a>
+      <a class="toc-chapter is-live is-current" href="ch17-ghz-w-states.html">17. GHZ and W States</a>
+      <a class="toc-chapter is-live" href="ch18-cluster-graph-states.html">18. Cluster and Graph States</a>
+      <a class="toc-chapter is-live" href="ch19-dicke-states.html">19. Dicke States</a>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part IV — Photonics</div>
+      <span class="status-tag is-cooking">Cooking in the kitchen</span>
+    </div>
+    <div class="toc-part">
+      <div class="toc-part-title">Part V — Algorithms</div>
+      <span class="toc-chapter is-locked">22–31. Parallelism → Shor</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <p class="eyebrow">Part III · Chapter 17</p>
+    <h1 style="font-size: 36px; margin: 8px 0 0;">GHZ and W States</h1>
+
+    <div class="lesson-header">
+      <div class="lesson-meta-row">
+        <span><b>Read</b> ~20 min</span>
+        <span><b>Prerequisites</b> Ch. 16</span>
+        <span><b>Tools</b> qubit-loss simulator, code cell</span>
+        <span class="status-tag is-live">Live</span>
+      </div>
+    </div>
+
+    <article class="chapter-body">
+      <span class="level-tag basic">Basic</span>
+      <p class="lede">Ch. 16 left a cliffhanger: two states can both be "genuinely multipartite entangled" and still be entangled in completely different ways. GHZ and W states are the two canonical examples — same pass/fail result on Ch. 16's test, opposite behavior on the single most practically important question you can ask about an entangled state: what happens if you lose one of the particles?</p>
+
+      <h2>The two states</h2>
+      <p style="text-align:center; font-size: 17px;">|GHZ_n⟩ = (|00...0⟩ + |11...1⟩)/√2</p>
+      <p style="text-align:center; font-size: 17px;">|W_n⟩ = (1/√n)(|10...0⟩ + |01...0⟩ + ... + |00...1⟩)</p>
+      <p>GHZ is "all qubits agree" — every term has every qubit the same. W is "exactly one qubit is excited, we just don't know which" — an equal superposition over every possible location of a single 1.</p>
+
+      <span class="level-tag intermediate">Intermediate</span>
+      <figure class="qc-figure" id="ghzw-widget">
+        <div class="figure-label"><span>Fig. 17.1 — pick a state, lose a qubit, inspect what's left</span><span>3-qubit case</span></div>
+        <div class="figure-body">
+          <div class="toggle-row">
+            <button class="ghzw-state-btn toggle-btn is-active" data-state="ghz">GHZ₃</button>
+            <button class="ghzw-state-btn toggle-btn" data-state="w">W₃</button>
+          </div>
+          <div class="toggle-row">
+            <button class="ghzw-lose-btn toggle-btn" data-wire="0">Lose q0</button>
+            <button class="ghzw-lose-btn toggle-btn" data-wire="1">Lose q1</button>
+            <button class="ghzw-lose-btn toggle-btn is-active" data-wire="2">Lose q2</button>
+          </div>
+          <div class="tensor-block-grid" id="ghzw-matrix" style="margin: 14px 0;"></div>
+          <div class="op-status-row"><span class="op-status" id="ghzw-tag">—</span></div>
+        </div>
+        <figcaption>Lose any qubit from GHZ₃: the remaining two collapse to a classical 50/50 mixture of |00⟩ and |11⟩ — zero quantum coherence left, fully separable. Lose any qubit from W₃: the remaining two retain genuine entanglement (the off-diagonal terms in the matrix above don't vanish) — W survives where GHZ collapses completely.</figcaption>
+      </figure>
+
+      <h3>Why this happens</h3>
+      <p>GHZ's "all-or-nothing" correlation is exactly its weakness: knowing any one qubit's value tells you everything about the rest, which also means losing access to any one qubit destroys everything you could have known. W's correlation is spread out — "exactly one qubit is excited" remains a meaningful, partially-known fact even if you can't see one of the qubits, because the excitation might have been on the qubit you lost, or might not have been.</p>
+
+      <span class="level-tag advanced">Advanced</span>
+      <h3>This is provably not just a different formula — it's a different resource</h3>
+      <p>Ch. 15 mentioned that GHZ and W states are LOCC-inequivalent. The qubit-loss behavior in Fig. 17.1 is the most direct intuition for why: any LOCC protocol converting GHZ into W (or vice versa) would have to preserve robustness-to-loss in some convertible way, but GHZ's entanglement vanishes completely on qubit loss while W's only degrades — a structural difference no amount of local processing and classical chat can paper over. This isn't just a textbook curiosity: GHZ states are the right choice when you need maximal correlation and can guarantee no losses (e.g. some quantum cryptography protocols), while W states are preferred in noisy or lossy settings — like photonic systems, where a photon failing to arrive is a routine occurrence, not a rare failure.</p>
+
+      <figure class="qc-figure code-cell">
+        <div class="figure-label"><span>Fig. 17.2 — code, runs in your browser</span><span class="code-status"></span></div>
+        <div class="figure-body">
+          <textarea spellcheck="false">import numpy as np
+
+def partial_trace_1of3(state, trace_wire):
+    remaining = [w for w in range(3) if w != trace_wire]
+    rho = np.zeros((4, 4), dtype=complex)
+    for i in range(8):
+        for j in range(8):
+            if ((i >> trace_wire) & 1) != ((j >> trace_wire) & 1):
+                continue
+            ri = ((i >> remaining[1]) & 1) * 2 + ((i >> remaining[0]) & 1)
+            rj = ((j >> remaining[1]) & 1) * 2 + ((j >> remaining[0]) & 1)
+            rho[ri, rj] += state[i] * np.conj(state[j])
+    return rho
+
+ghz = np.zeros(8); ghz[0] = ghz[7] = 1/np.sqrt(2)
+w   = np.zeros(8); w[1] = w[2] = w[4] = 1/np.sqrt(3)
+
+print("GHZ, losing q2 -- reduced state:\n", np.round(partial_trace_1of3(ghz, 2), 2))
+print("\nW, losing q2 -- reduced state:\n", np.round(partial_trace_1of3(w, 2), 2))</textarea>
+          <div class="code-cell-actions">
+            <button class="btn is-signal js-run">Run ▸</button>
+            <button class="btn js-reset">Reset</button>
+          </div>
+          <div class="code-output"></div>
+        </div>
+        <figcaption>Compare the off-diagonal entries between the two printed matrices directly — that comparison is the entire content of this chapter, made numerically explicit.</figcaption>
+      </figure>
+
+      <div class="resource-panel">
+        <button class="resource-toggle"><span class="chev">▸</span> Further reading: GHZ and W states</button>
+        <ul class="resource-list">
+          <li><span class="res-type">Article</span><a href="https://en.wikipedia.org/wiki/W_state" target="_blank" rel="noopener">Wikipedia — W state</a><span class="res-note">Confirms the loss-robustness property demonstrated in Fig. 17.1, with further references.</span></li>
+          <li><span class="res-type">Paper</span><a href="https://arxiv.org/abs/1910.03093" target="_blank" rel="noopener">"A robust W-state encoding for linear quantum optics" (arXiv)</a><span class="res-note">Real photonic-hardware motivation for why W's robustness matters practically.</span></li>
+          <li><span class="res-type">Textbook</span><a href="https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE" target="_blank" rel="noopener">Nielsen & Chuang, §12.5</a><span class="res-note">GHZ states as the standard maximal-correlation example.</span></li>
+        </ul>
+      </div>
+    </article>
+
+    <div class="quiz-card" data-card-id="ch17-q1">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Write down the 3-qubit GHZ and W states.</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>GHZ₃ = (|000⟩+|111⟩)/√2.  W₃ = (|100⟩+|010⟩+|001⟩)/√3.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch17-q2">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What happens to the entanglement of the remaining qubits if you lose one qubit from a GHZ state?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>It vanishes completely — the remaining qubits become a classical, separable 50/50 mixture with no quantum coherence left.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch17-q3">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Why does W survive qubit loss when GHZ doesn't?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>GHZ's correlation is all-or-nothing — every qubit's value reveals all the others, so losing one destroys the whole structure. W's "exactly one qubit excited" fact stays meaningful even without seeing every qubit, since the excitation might or might not have been on the lost one.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch17-q4">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">What does "LOCC-inequivalent" mean for GHZ and W, and what evidence from this chapter supports it?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>It means no LOCC protocol can convert one into the other. Their opposite behavior under qubit loss (GHZ collapses entirely, W only degrades) is a structural difference that any conversion would have to somehow preserve and can't — strong intuition for why they're inequivalent.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+    <div class="quiz-card" data-card-id="ch17-q5">
+      <span class="eyebrow">Check your understanding</span>
+      <p class="quiz-question">Why might a real photonic experiment prefer W states over GHZ states?</p>
+      <button class="btn js-reveal">Show answer</button>
+      <div class="quiz-answer"><p>Photon loss is routine in real hardware, not rare. W states retain useful entanglement after a loss event; GHZ states lose everything, making W the more practical choice whenever loss is a realistic concern.</p></div>
+      <div class="quiz-rate">
+        <button class="btn" data-quality="2">Hard</button>
+        <button class="btn is-signal" data-quality="4">Good</button>
+        <button class="btn is-signal" data-quality="5">Easy</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<button id="review-fab" data-due="0">Review</button>
+<div id="review-overlay">
+  <div class="review-modal">
+    <button class="review-modal-close">✕ close</button>
+    <h3 style="margin-top:0;">Review queue</h3>
+    <p style="color: var(--ink-muted); font-size: 14px;">Scroll back to a chapter's quiz cards to review them once they're due — a full cross-chapter queue view is a planned upgrade.</p>
+  </div>
+</div>
+
+<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/code-cell.js"></script>
+<script src="../js/ch17-ghz-w.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }] });
+  });
+</script>
+</body>
+</html>
