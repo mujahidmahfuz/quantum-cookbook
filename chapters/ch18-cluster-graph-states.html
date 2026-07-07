@@ -13,16 +13,21 @@
 
 <header class="site-header">
   <div class="site-header-inner">
-    <div class="brand"><a href="../index.html"><span class="brand-mark">§</span> Quantum Cookbook</a></div>
+    <div class="brand"><a href="../index.html">Quantum Cookbook</a></div>
     <nav class="site-nav">
       <a href="../index.html#toc">Contents</a>
-      <a href="../composer.html">Composer</a>
+      <a href="../about.html">About</a>
+      <a href="../updates.html">Updates</a>
     </nav>
   </div>
 </header>
 
 <div class="page">
   <aside class="toc-rail">
+    <div class="toc-part">
+      <div class="toc-part-title">Part 0 — Prerequisite Quantum Mechanics</div>
+      <span class="status-tag is-planned">Planned · optional</span>
+    </div>
     <div class="toc-part">
       <div class="toc-part-title">Part I — Foundations</div>
       <a class="toc-chapter is-live" href="ch01-basic-linear-algebra.html">1. Basic Linear Algebra</a>
@@ -239,11 +244,12 @@ print("Stabilizer leaves state unchanged:", np.allclose(stab @ state, state) or 
   </div>
 </div>
 
-<footer class="site-footer">Quantum Cookbook — built free, stays free.</footer>
+<footer class="site-footer">Quantum Cookbook — built free, stays free. Created by <a href="../about.html">Mujahid Mahfuz</a>.</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 <script src="../js/main.js"></script>
+<script src="../js/ai-tutor.js"></script>
 <script src="../js/code-cell.js"></script>
 <script src="../js/ch18-graph-states.js"></script>
 <script>

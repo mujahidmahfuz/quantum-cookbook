@@ -7,7 +7,7 @@
    =========================================================== */
 
 const QC_STORE_KEY = "qc_cards_v1";
-const QC_LATEST_VERSION = 4; // bump this whenever updates.html gets a new changelog entry
+const QC_LATEST_VERSION = 5; // bump this whenever updates.html gets a new changelog entry
 
 function qcCheckUpdateBadge() {
   let lastSeen = 0;
